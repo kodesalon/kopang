@@ -1,4 +1,4 @@
-package com.kodesalon.kopang.domain.exception;
+package com.kodesalon.kopang.service.exception;
 
 public class NotFoundException extends RuntimeException {
 
