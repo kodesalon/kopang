@@ -54,6 +54,10 @@ public class Order {
 			.reduce(Money.ZERO, Money::plus);
 	}
 
+	public Long getNo() {
+		return no;
+	}
+
 	public Long getMemberNo() {
 		return memberNo;
 	}
