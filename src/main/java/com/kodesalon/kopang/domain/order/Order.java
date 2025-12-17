@@ -1,5 +1,7 @@
 package com.kodesalon.kopang.domain.order;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Order {
@@ -38,6 +40,12 @@ public class Order {
 
 	public static Order createPending(Long no, Long memberNo, List<OrderProduct> products) {
 		return new Order(no, memberNo, OrderStatus.PENDING, calculateTotalMoney(products), products);
+	}
+
+	public static Order createPending(Long memberNo, Long productNo, Integer count, BigDecimal productPrice) {
+		List<OrderProduct> orderProducts = new ArrayList<>();
+		orderProducts.add(OrderProduct.create(productNo, count, productPrice));
+		return new Order(null, memberNo, OrderStatus.PENDING, calculateTotalMoney(orderProducts), orderProducts);
 	}
 
 	private static Money calculateTotalMoney(List<OrderProduct> products) {
