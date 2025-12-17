@@ -15,4 +15,8 @@ public class Product {
 		this.description = description;
 		this.price = price;
 	}
+
+	public BigDecimal getPrice() {
+		return price;
+	}
 }
