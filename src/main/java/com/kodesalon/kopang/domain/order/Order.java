@@ -46,7 +46,19 @@ public class Order {
 			.reduce(Money.ZERO, Money::plus);
 	}
 
+	public Long getMemberNo() {
+		return memberNo;
+	}
+
 	public OrderStatus getStatus() {
 		return status;
+	}
+
+	public Money getTotalPrice() {
+		return totalPrice;
+	}
+
+	public List<OrderProduct> getProducts() {
+		return products;
 	}
 }

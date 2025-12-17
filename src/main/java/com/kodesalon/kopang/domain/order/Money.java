@@ -21,6 +21,10 @@ public class Money {
 		return new Money(amount.add(money.amount));
 	}
 
+	public BigDecimal getAmount() {
+		return amount;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (o == null || getClass() != o.getClass())
