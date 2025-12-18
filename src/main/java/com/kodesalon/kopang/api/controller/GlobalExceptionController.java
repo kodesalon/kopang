@@ -21,4 +21,10 @@ public class GlobalExceptionController {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND)
 			.body(new KopangExceptionResponse(e.getMessage(), HttpStatus.NOT_FOUND.value()));
 	}
+
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<KopangExceptionResponse> internalServerError(Exception e) {
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+			.body(new KopangExceptionResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
+	}
 }
