@@ -29,3 +29,15 @@ spring:
   h2:
     console:
       enabled: true
+
+---
+spring.config.activate.on-profile: dev
+
+spring:
+  datasource:
+    hikari:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      jdbc-url: jdbc:mysql://${STORAGE_DATABASE_DB_URL}/${STORAGE_DATABASE_DB_NAME}
+      username: ${STORAGE_DATABASE_DB_USERNAME}
+      password: ${STORAGE_DATABASE_DB_PASSWORD}
+      pool-name: kopang-db-pool
