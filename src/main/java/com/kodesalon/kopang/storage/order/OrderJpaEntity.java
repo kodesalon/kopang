@@ -10,6 +10,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.kodesalon.kopang.domain.order.Order;
+import com.kodesalon.kopang.domain.order.OrderProduct;
 import com.kodesalon.kopang.domain.order.OrderStatus;
 
 import jakarta.persistence.CascadeType;
@@ -77,5 +78,12 @@ public class OrderJpaEntity {
 
 	public void addOrderProduct(List<OrderProductJpaEntity> orderProducts) {
 		this.orderProducts.addAll(orderProducts);
+	}
+
+	public Order toDomain() {
+		List<OrderProduct> products = orderProducts.stream()
+			.map(OrderProductJpaEntity::toDomain)
+			.toList();
+		return Order.of(no, memberNo, status, products);
 	}
 }
