@@ -31,7 +31,7 @@ class StockServiceTest {
 		when(stockRepository.findByProductNo(anyLong()))
 			.thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> stockService.decrease(1L))
+		assertThatThrownBy(() -> stockService.decrease(1L, 1))
 			.isInstanceOf(NotFoundException.class)
 			.hasMessage(NotFoundException.stock(1L).getMessage());
 	}
@@ -44,7 +44,7 @@ class StockServiceTest {
 		given(stockRepository.findByProductNo(productNo))
 			.willReturn(Optional.of(stock));
 
-		Stock result = stockService.decrease(productNo);
+		Stock result = stockService.decrease(productNo, 1);
 
 		assertThat(result.getQuantity()).isEqualTo(99);
 	}
