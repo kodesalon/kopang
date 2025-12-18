@@ -15,7 +15,7 @@ public class OrderRepositoryImpl implements OrderRepository {
 	}
 
 	@Override
-	public void register(Order order) {
-		orderJpaRepository.save(OrderJpaEntity.from(order));
+	public Order register(Order order) {
+		return orderJpaRepository.save(OrderJpaEntity.from(order)).toDomain();
 	}
 }
