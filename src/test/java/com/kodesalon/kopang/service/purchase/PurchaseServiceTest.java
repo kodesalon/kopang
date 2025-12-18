@@ -33,7 +33,7 @@ class PurchaseServiceTest {
 		Integer count = 1;
 		Stock stock = new Stock(1L, 1L, 100);
 		Order order = OrderFixture.PENDING_ORDER;
-		given(stockService.decrease(productNo)).willReturn(stock);
+		given(stockService.decrease(productNo, count)).willReturn(stock);
 		given(orderService.createOrder(memberNo, productNo, count)).willReturn(order);
 
 		ReservationOrderResult result = purchaseService.reservation(memberNo, productNo, count);
@@ -42,7 +42,7 @@ class PurchaseServiceTest {
 			() -> assertThat(result).isNotNull(),
 			() -> assertThat(result.stock()).isEqualTo(stock),
 			() -> assertThat(result.order()).isEqualTo(order),
-			() -> verify(stockService).decrease(productNo),
+			() -> verify(stockService).decrease(productNo, count),
 			() -> verify(orderService).createOrder(memberNo, productNo, count)
 		);
 	}
