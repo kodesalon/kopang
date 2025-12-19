@@ -21,7 +21,7 @@ public class OrderService {
 	}
 
 	@Transactional
-	public Order createOrder(Long memberNo, Long productNo, Integer count) {
+	public Order createOrderPending(Long memberNo, Long productNo, Integer count) {
 		Product product = productRepository.findByProductNo(productNo)
 			.orElseThrow(() -> NotFoundException.product(productNo));
 		Order pendingOrder = Order.createPending(memberNo, productNo, count, product.getPrice());
