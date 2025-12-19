@@ -5,8 +5,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.kodesalon.kopang.domain.order.Order;
@@ -27,6 +29,8 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "order")
 @EntityListeners(AuditingEntityListener.class)
+@SQLDelete(sql = "UPDATE orders SET deleted_at = NOW() WHERE no = ?")
+@SQLRestriction(value = "deleted_at IS NULL")
 public class OrderJpaEntity {
 
 	@Id
@@ -43,11 +47,13 @@ public class OrderJpaEntity {
 	@Column(nullable = false)
 	private OrderStatus status;
 
-	@CreationTimestamp
+	@CreatedDate
 	private LocalDateTime orderedAt;
 
-	@UpdateTimestamp
+	@LastModifiedDate
 	private LocalDateTime updatedAt;
+
+	private LocalDateTime deletedAt;
 
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
 	private final List<OrderProductJpaEntity> orderProducts = new ArrayList<>();
