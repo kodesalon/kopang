@@ -27,7 +27,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "order")
+@Table(name = "orders")
 @EntityListeners(AuditingEntityListener.class)
 @SQLDelete(sql = "UPDATE orders SET deleted_at = NOW() WHERE no = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
@@ -83,5 +83,9 @@ public class OrderJpaEntity {
 
 	public void addOrderProduct(List<OrderProductJpaEntity> orderProducts) {
 		this.orderProducts.addAll(orderProducts);
+	}
+
+	public List<OrderProductJpaEntity> getOrderProducts() {
+		return orderProducts;
 	}
 }
