@@ -31,7 +31,29 @@ public class ProductJpaEntity {
 	protected ProductJpaEntity() {
 	}
 
+	public ProductJpaEntity(String name, String description, BigDecimal price) {
+		this.name = name;
+		this.description = description;
+		this.price = price;
+	}
+
 	public Product toDomain() {
 		return new Product(no, name, description, price);
+	}
+
+	public Long getNo() {
+		return no;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public BigDecimal getPrice() {
+		return price;
 	}
 }

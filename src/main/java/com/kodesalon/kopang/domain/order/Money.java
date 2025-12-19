@@ -30,11 +30,11 @@ public class Money {
 		if (o == null || getClass() != o.getClass())
 			return false;
 		Money money = (Money)o;
-		return Objects.equals(amount, money.amount);
+		return amount.compareTo(money.amount) == 0;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hashCode(amount);
+		return amount.stripTrailingZeros().hashCode();
 	}
 }

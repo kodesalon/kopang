@@ -25,7 +25,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "order")
+@Table(name = "orders")
 @EntityListeners(AuditingEntityListener.class)
 public class OrderJpaEntity {
 
@@ -77,5 +77,9 @@ public class OrderJpaEntity {
 
 	public void addOrderProduct(List<OrderProductJpaEntity> orderProducts) {
 		this.orderProducts.addAll(orderProducts);
+	}
+
+	public List<OrderProductJpaEntity> getOrderProducts() {
+		return orderProducts;
 	}
 }

@@ -1,9 +1,10 @@
 package com.kodesalon.kopang.domain.order;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
+import java.math.BigDecimal;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +14,23 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 class OrderTest {
+
+	@DisplayName("주문 createPending 을 호출하면 결제 대기 상태의 Order 를 생성하고, 상품의 가격과 개수에 맞는 주문 상품 및 최종 가격이 결정된다")
+	@Test
+	void createPending() {
+		Integer count = 1;
+		BigDecimal productPrice = BigDecimal.valueOf(1000);
+
+		Order order = Order.createPending(1L, 1L, count, productPrice);
+
+		Money totalPrice = new Money(count.longValue() * productPrice.longValue());
+		assertAll(
+			() -> assertThat(order).isNotNull(),
+			() -> assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING),
+			() -> assertThat(order.getTotalPrice()).isEqualTo(totalPrice),
+			() -> assertThat(order.getProducts()).hasSize(1)
+		);
+	}
 
 	@DisplayName("주문 결제 테스트")
 	@Nested
