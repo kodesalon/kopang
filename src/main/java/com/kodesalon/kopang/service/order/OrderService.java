@@ -25,7 +25,6 @@ public class OrderService {
 		Product product = productRepository.findByProductNo(productNo)
 			.orElseThrow(() -> NotFoundException.product(productNo));
 		Order pendingOrder = Order.createPending(memberNo, productNo, count, product.getPrice());
-		orderRepository.register(pendingOrder);
-		return pendingOrder;
+		return orderRepository.register(pendingOrder);
 	}
 }

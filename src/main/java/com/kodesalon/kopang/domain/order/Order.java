@@ -38,20 +38,24 @@ public class Order {
 		return new Order(no, memberNo, OrderStatus.CANCELLED, totalPrice, products);
 	}
 
-	public static Order createPending(Long no, Long memberNo, List<OrderProduct> products) {
-		return new Order(no, memberNo, OrderStatus.PENDING, calculateTotalMoney(products), products);
-	}
-
 	public static Order createPending(Long memberNo, Long productNo, Integer count, BigDecimal productPrice) {
 		List<OrderProduct> orderProducts = new ArrayList<>();
 		orderProducts.add(OrderProduct.create(productNo, count, productPrice));
 		return new Order(null, memberNo, OrderStatus.PENDING, calculateTotalMoney(orderProducts), orderProducts);
 	}
 
+	public static Order of(Long no, Long memberNo, OrderStatus status, List<OrderProduct> products) {
+		return new Order(no, memberNo, status, calculateTotalMoney(products), products);
+	}
+
 	private static Money calculateTotalMoney(List<OrderProduct> products) {
 		return products.stream()
 			.map(OrderProduct::getOrderPrice)
 			.reduce(Money.ZERO, Money::plus);
+	}
+
+	public Long getNo() {
+		return no;
 	}
 
 	public Long getMemberNo() {

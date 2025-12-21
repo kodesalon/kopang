@@ -17,10 +17,10 @@ public class StockService {
 	}
 
 	@Transactional
-	public Stock decrease(Long productNo) {
+	public Stock decrease(Long productNo, Integer count) {
 		Stock stock = stockRepository.findByProductNo(productNo)
 			.orElseThrow(() -> NotFoundException.stock(productNo));
-		Stock decreased = stock.decrease(1);
+		Stock decreased = stock.decrease(count);
 		stockRepository.updateStock(decreased);
 		return decreased;
 	}
