@@ -1,6 +1,10 @@
 package com.kodesalon.kopang.storage.order;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import com.kodesalon.kopang.domain.order.OrderProduct;
 
@@ -16,6 +20,8 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "order_product")
+@SQLDelete(sql = "UPDATE order_product SET deleted_at = NOW() WHERE no = ?")
+@SQLRestriction(value = "deleted_at IS NULL")
 public class OrderProductJpaEntity {
 
 	@Id
@@ -34,6 +40,8 @@ public class OrderProductJpaEntity {
 
 	@Column(nullable = false)
 	private Integer count;
+
+	private LocalDateTime deletedAt;
 
 	protected OrderProductJpaEntity() {
 	}
