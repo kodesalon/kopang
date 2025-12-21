@@ -21,16 +21,20 @@ public class Money {
 		return new Money(amount.add(money.amount));
 	}
 
+	public BigDecimal getAmount() {
+		return amount;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (o == null || getClass() != o.getClass())
 			return false;
 		Money money = (Money)o;
-		return Objects.equals(amount, money.amount);
+		return amount.compareTo(money.amount) == 0;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hashCode(amount);
+		return amount.stripTrailingZeros().hashCode();
 	}
 }

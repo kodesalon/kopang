@@ -29,6 +29,10 @@ public class Stock {
 		return new Stock(no, productNo, quantity + count);
 	}
 
+	public Long getProductNo() {
+		return productNo;
+	}
+
 	public Integer getQuantity() {
 		return quantity;
 	}
