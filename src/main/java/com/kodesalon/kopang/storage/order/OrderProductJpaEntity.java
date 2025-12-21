@@ -53,4 +53,8 @@ public class OrderProductJpaEntity {
 			orderProduct.getCount()
 		);
 	}
+
+	public OrderProduct toDomain() {
+		return OrderProduct.of(no, productNo, count, orderPrice);
+	}
 }
