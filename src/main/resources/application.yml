@@ -45,6 +45,10 @@ spring:
       username: ${STORAGE_DATABASE_DB_USERNAME}
       password: ${STORAGE_DATABASE_DB_PASSWORD}
       pool-name: kopang-db-pool
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 management:
   endpoints:
