@@ -25,7 +25,7 @@ public class RedisStockReservationRepositoryImpl implements StockReservationRepo
 	}
 
 	@Override
-	public Boolean decreaseStock(Long productNo, Integer count) {
+	public boolean decreaseStock(Long productNo, Integer count) {
 		return redisTemplate.execute(
 			decreaseStockScript,
 			List.of(String.format(PRODUCT_STOCK_KEY_FORMAT, productNo)),
