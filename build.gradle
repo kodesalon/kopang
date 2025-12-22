@@ -28,6 +28,9 @@ dependencies {
     runtimeOnly 'com.mysql:mysql-connector-j'
     runtimeOnly 'com.h2database:h2'
 
+    //redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
     // api
     implementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation 'io.rest-assured:spring-mock-mvc'
