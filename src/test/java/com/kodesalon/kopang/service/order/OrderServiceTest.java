@@ -44,7 +44,7 @@ class OrderServiceTest {
 		given(productRepository.findByProductNo(productNo))
 			.willReturn(Optional.of(product));
 
-		Order result = orderService.createOrder(memberNo, productNo, count);
+		Order result = orderService.createOrderPending(memberNo, productNo, count);
 
 		Money totalPrice = new Money(count.longValue() * productPrice.longValue());
 		assertAll(
@@ -65,7 +65,7 @@ class OrderServiceTest {
 			.willReturn(Optional.empty());
 
 		assertAll(
-			() -> assertThatThrownBy(() -> orderService.createOrder(1L, productNo, 1))
+			() -> assertThatThrownBy(() -> orderService.createOrderPending(1L, productNo, 1))
 				.isInstanceOf(NotFoundException.class)
 				.hasMessage(NotFoundException.product(productNo).getMessage()),
 			() -> verify(orderRepository, times(0)).register(any())

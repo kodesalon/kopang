@@ -22,7 +22,7 @@ public class PurchaseService {
 	@Transactional
 	public ReservationOrderResult reservation(Long memberNo, Long productNo, Integer count) {
 		Stock stock = stockService.decrease(productNo, count);
-		Order order = orderService.createOrder(memberNo, productNo, count);
+		Order order = orderService.createOrderPending(memberNo, productNo, count);
 		return new ReservationOrderResult(stock, order);
 	}
 }
