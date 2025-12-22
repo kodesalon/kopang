@@ -16,4 +16,8 @@ public interface StockJpaRepository extends JpaRepository<StockJpaEntity, Long> 
 	@Modifying
 	@Query("UPDATE StockJpaEntity s SET s.quantity = :quantity WHERE s.productNo = :productNo")
 	void updateStock(Long productNo, Integer quantity);
+
+	@Modifying
+	@Query("UPDATE StockJpaEntity s SET s.quantity = s.quantity - :count WHERE s.productNo = :productNo")
+	void updateDecreaseStock(Long productNo, Integer count);
 }

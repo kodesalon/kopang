@@ -30,7 +30,7 @@ public class RedisStockReservationRepositoryImpl implements StockReservationRepo
 			decreaseStockScript,
 			List.of(String.format(PRODUCT_STOCK_KEY_FORMAT, productNo)),
 			String.valueOf(count)
-		) > 0;
+		) >= 0;
 	}
 
 	@Override
