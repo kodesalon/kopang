@@ -1,13 +1,10 @@
 package com.kodesalon.kopang.storage.order;
 
 import java.math.BigDecimal;
-<<<<<<< HEAD
-=======
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
->>>>>>> issue/#1/20251220
 
 import com.kodesalon.kopang.domain.order.OrderProduct;
 
@@ -23,11 +20,8 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "order_product")
-<<<<<<< HEAD
-=======
 @SQLDelete(sql = "UPDATE order_product SET deleted_at = NOW() WHERE no = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
->>>>>>> issue/#1/20251220
 public class OrderProductJpaEntity {
 
 	@Id
@@ -47,11 +41,8 @@ public class OrderProductJpaEntity {
 	@Column(nullable = false)
 	private Integer count;
 
-<<<<<<< HEAD
-=======
 	private LocalDateTime deletedAt;
 
->>>>>>> issue/#1/20251220
 	protected OrderProductJpaEntity() {
 	}
 
