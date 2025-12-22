@@ -47,7 +47,7 @@ spring:
       pool-name: kopang-db-pool
   data:
     redis:
-      host: localhost
+      host: ${REDIS_HOST}
       port: 6379
 
 management:
