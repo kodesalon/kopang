@@ -37,4 +37,4 @@ out/
 .vscode/
 
 ### k6 secret
-k6/secret.json
+k6/lib/secret.json
