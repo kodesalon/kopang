@@ -18,6 +18,7 @@ public class ProductRepositoryImpl implements ProductRepository {
 
 	@Override
 	public Optional<Product> findByProductNo(Long productNo) {
-		return Optional.ofNullable(productJpaRepository.findByNo(productNo).toDomain());
+		return Optional.ofNullable(productJpaRepository.findByNo(productNo))
+			.map(ProductJpaEntity::toDomain);
 	}
 }
