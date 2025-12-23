@@ -92,4 +92,8 @@ public class OrderJpaEntity {
 			.toList();
 		return Order.of(no, memberNo, status, products);
 	}
+
+	public List<OrderProductJpaEntity> getOrderProducts() {
+		return orderProducts;
+	}
 }

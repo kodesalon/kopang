@@ -43,6 +43,9 @@ class OrderServiceTest {
 		Product product = new Product(productNo, "테스트상품 이름", "테스트상품 설명", productPrice);
 		given(productRepository.findByProductNo(productNo))
 			.willReturn(Optional.of(product));
+		Order expectedResult = Order.createPending(memberNo, productNo, count, productPrice);
+		given(orderRepository.register(any(Order.class)))
+			.willReturn(expectedResult);
 
 		Order result = orderService.createOrderPending(memberNo, productNo, count);
 
