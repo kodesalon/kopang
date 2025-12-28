@@ -2,23 +2,27 @@ package com.kodesalon.kopang.service.purchase;
 
 import org.springframework.stereotype.Component;
 
+import com.kodesalon.kopang.domain.order.Order;
+import com.kodesalon.kopang.domain.stock.Stock;
+import com.kodesalon.kopang.service.order.OrderService;
 import com.kodesalon.kopang.service.stock.StockReservationService;
 
 @Component
 public class PurchaseFacade {
 
 	private final StockReservationService stockReservationService;
-	private final PurchaseService purchaseService;
+	private final OrderService orderService;
 
-	public PurchaseFacade(StockReservationService stockReservationService, PurchaseService purchaseService) {
+	public PurchaseFacade(StockReservationService stockReservationService, OrderService orderService) {
 		this.stockReservationService = stockReservationService;
-		this.purchaseService = purchaseService;
+		this.orderService = orderService;
 	}
 
 	public ReservationOrderResult reserve(Long memberNo, Long productNo, Integer count) {
-		stockReservationService.decrease(productNo, count);
+		Stock stockVO = stockReservationService.decrease(productNo, count);
 		try {
-			return purchaseService.reservation(memberNo, productNo, count);
+			Order order = orderService.createOrderPending(memberNo, productNo, count);
+			return new ReservationOrderResult(stockVO, order);
 		} catch (Exception e) {
 			stockReservationService.increase(productNo, count);
 			throw e;
