@@ -14,10 +14,15 @@ public class Stock {
 		this.quantity = quantity;
 	}
 
-	public Stock decrease(Integer count) {
-		if (quantity.equals(ZERO)) {
-			throw new IllegalStateException("남아있는 재고 수량이 없습니다");
+	public static Stock of(Long productNo, Integer quantity) {
+		if (quantity < ZERO) {
+			throw new IllegalStateException("재고 수량은 0보다 작을 수 없습니다");
 		}
+		return new Stock(null, productNo, quantity);
+	}
+
+	public Stock decrease(Integer count) {
+		checkAvailable();
 		int remainQuantity = quantity - count;
 		if (remainQuantity < ZERO) {
 			throw new IllegalStateException("재고 수량은 0보다 작을 수 없습니다");
@@ -27,6 +32,12 @@ public class Stock {
 
 	public Stock increase(Integer count) {
 		return new Stock(no, productNo, quantity + count);
+	}
+
+	public void checkAvailable() {
+		if (quantity.equals(ZERO)) {
+			throw new IllegalStateException("남아있는 재고 수량이 없습니다");
+		}
 	}
 
 	public Long getProductNo() {
