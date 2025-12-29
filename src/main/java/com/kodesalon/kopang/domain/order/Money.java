@@ -1,7 +1,6 @@
 package com.kodesalon.kopang.domain.order;
 
 import java.math.BigDecimal;
-import java.util.Objects;
 
 public class Money {
 
