@@ -12,12 +12,25 @@ public class Order {
 	private final Money totalPrice;
 	private final List<OrderProduct> products;
 
-	private Order(Long no, Long memberNo, OrderStatus status, Money totalPrice, List<OrderProduct> products) {
-		this.no = no;
-		this.memberNo = memberNo;
-		this.status = status;
-		this.totalPrice = totalPrice;
-		this.products = products;
+	public Order preparePayment(Money amount) {
+		if (!amount.equals(totalPrice)) {
+			throw new IllegalArgumentException("주문 금액과 결제 금액이 일치하지 않습니다");
+		}
+		if (status.isPaid()) {
+			throw new IllegalStateException("[중복 결제 불가능] 이미 결제된 주문입니다");
+		} else if (status.isCanceled()) {
+			throw new IllegalStateException("[취소된 주문] 이미 취소된 주문입니다");
+		}
+		return new Order(no, memberNo, OrderStatus.PAYMENT_IN_PROGRESS, totalPrice, products);
+	}
+
+	public Order rollbackToPending() {
+		if (status.isPaid()) {
+			throw new IllegalStateException("[중복 결제 불가능] 이미 결제된 주문입니다");
+		} else if (status.isCanceled()) {
+			throw new IllegalStateException("[취소된 주문] 이미 취소된 주문입니다");
+		}
+		return new Order(no, memberNo, OrderStatus.PENDING, totalPrice, products);
 	}
 
 	public Order pay() {
@@ -25,6 +38,8 @@ public class Order {
 			throw new IllegalStateException("[중복 결제 불가능] 이미 결제된 주문입니다");
 		} else if (status.isCanceled()) {
 			throw new IllegalStateException("[취소된 주문] 이미 취소된 주문입니다");
+		} else if (status.isPending()) {
+			throw new IllegalStateException("[결제 대기 주문] 결제 대기중인 주문입니다");
 		}
 		return new Order(no, memberNo, OrderStatus.PAID, totalPrice, products);
 	}
@@ -52,6 +67,14 @@ public class Order {
 		return products.stream()
 			.map(OrderProduct::getOrderPrice)
 			.reduce(Money.ZERO, Money::plus);
+	}
+
+	private Order(Long no, Long memberNo, OrderStatus status, Money totalPrice, List<OrderProduct> products) {
+		this.no = no;
+		this.memberNo = memberNo;
+		this.status = status;
+		this.totalPrice = totalPrice;
+		this.products = products;
 	}
 
 	public Long getNo() {
