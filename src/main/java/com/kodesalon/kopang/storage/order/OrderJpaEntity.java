@@ -90,7 +90,7 @@ public class OrderJpaEntity {
 		List<OrderProduct> products = orderProducts.stream()
 			.map(OrderProductJpaEntity::toDomain)
 			.toList();
-		return Order.of(no, memberNo, status, products);
+		return Order.of(no, memberNo, status, products, orderedAt);
 	}
 
 	public List<OrderProductJpaEntity> getOrderProducts() {
