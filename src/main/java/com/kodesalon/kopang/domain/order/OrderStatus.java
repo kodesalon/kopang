@@ -19,4 +19,8 @@ public enum OrderStatus {
 	public boolean isPending() {
 		return this == PENDING;
 	}
+
+	public boolean isPaymentInProgress() {
+		return this == PAYMENT_IN_PROGRESS;
+	}
 }
