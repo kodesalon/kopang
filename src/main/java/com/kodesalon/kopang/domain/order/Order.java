@@ -7,6 +7,8 @@ import java.util.List;
 
 public class Order {
 
+	private static final long PAYMENT_EXPIRATION_MINUTES = 5;
+
 	private final Long no;
 	private final Long memberNo;
 	private final OrderStatus status;
@@ -49,6 +51,10 @@ public class Order {
 		if (!totalPrice.equals(amount)) {
 			throw new IllegalArgumentException("주문 금액과 결제 금액이 일치하지 않습니다");
 		}
+	}
+
+	public static LocalDateTime calculateCutoffTime(LocalDateTime now) {
+		return now.minusMinutes(PAYMENT_EXPIRATION_MINUTES);
 	}
 
 	public static Order createPending(Long memberNo, Long productNo, Integer count, BigDecimal productPrice) {
