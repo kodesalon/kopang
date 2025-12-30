@@ -1,6 +1,8 @@
 package com.kodesalon.kopang.service.order;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +55,12 @@ public class OrderService {
 	public void cancelOrder(Long orderNo) {
 		Order cancelledOrder = findOrder(orderNo).cancel();
 		orderRepository.updateStatusCancel(cancelledOrder); // 스케줄러와의 경합 시 처리 로직 필요
+	}
+
+	@Transactional(readOnly = true)
+	public List<Order> findExpiredOrders(LocalDateTime now) {
+		LocalDateTime cutoffTime = Order.calculateCutoffTime(now);
+		return orderRepository.findExpiredOrders(cutoffTime);
 	}
 
 	private Order findOrder(Long orderNo) {
