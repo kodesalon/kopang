@@ -1,6 +1,7 @@
 package com.kodesalon.kopang.storage.stock;
 
 import com.kodesalon.kopang.domain.stock.Stock;
+import com.kodesalon.kopang.domain.stock.StockQuantity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -32,7 +33,7 @@ public class StockJpaEntity {
 	}
 
 	public Stock toDomain() {
-		return new Stock(no, productNo, quantity);
+		return new Stock(no, productNo, StockQuantity.from(quantity));
 	}
 
 	public Long getNo() {

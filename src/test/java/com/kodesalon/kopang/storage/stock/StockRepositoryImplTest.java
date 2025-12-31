@@ -12,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 
 import com.kodesalon.kopang.domain.stock.Stock;
+import com.kodesalon.kopang.domain.stock.StockQuantity;
 import com.kodesalon.kopang.domain.stock.StockRepository;
 
 @DataJpaTest
@@ -56,7 +57,7 @@ class StockRepositoryImplTest {
 		tem.clear();
 
 		// when
-		Stock stock = new Stock(entity.getNo(), 1L, 99);
+		Stock stock = new Stock(entity.getNo(), 1L, StockQuantity.from(99));
 		stockRepository.updateStock(stock);
 
 		// then

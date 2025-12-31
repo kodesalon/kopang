@@ -2,7 +2,7 @@ package com.kodesalon.kopang.service.stock;
 
 import org.springframework.stereotype.Service;
 
-import com.kodesalon.kopang.domain.stock.Stock;
+import com.kodesalon.kopang.domain.stock.StockQuantity;
 import com.kodesalon.kopang.domain.stock.StockReservationRepository;
 
 @Service
@@ -14,10 +14,8 @@ public class StockReservationService {
 		this.stockReservationRepository = stockReservationRepository;
 	}
 
-	public Stock decrease(Long productNo, Integer count) {
-		Stock stock = stockReservationRepository.decreaseStock(productNo, count);
-		stock.checkAvailable();
-		return stock;
+	public StockQuantity decrease(Long productNo, Integer count) {
+		return stockReservationRepository.decreaseStock(productNo, count);
 	}
 
 	public void increase(Long productNo, Integer count) {
