@@ -14,7 +14,7 @@ class StockTest {
 	@DisplayName("재고의 수량 차감 요청 시, count 만큼 차감된다")
 	@Test
 	void decrease() {
-		Stock stock = new Stock(1L, 1L, 100);
+		Stock stock = new Stock(1L, 1L, StockQuantity.from(100));
 
 		Stock decreased = stock.decrease(1);
 
@@ -28,7 +28,7 @@ class StockTest {
 	@ParameterizedTest
 	@CsvSource({"0, 1", "1, 2"})
 	void decrease_fail(int quantity, int count) {
-		Stock stock = new Stock(1L, 1L, quantity);
+		Stock stock = new Stock(1L, 1L, StockQuantity.from(quantity));
 		assertThatThrownBy(() -> stock.decrease(count))
 			.isInstanceOf(IllegalStateException.class);
 	}
@@ -36,7 +36,7 @@ class StockTest {
 	@DisplayName("재고의 수량 증가 요청 시, count 만큼 증가된다")
 	@Test
 	void increase() {
-		Stock stock = new Stock(1L, 1L, 99);
+		Stock stock = new Stock(1L, 1L, StockQuantity.from(99));
 
 		Stock increased = stock.increase(1);
 
