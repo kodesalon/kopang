@@ -1,5 +1,7 @@
 package com.kodesalon.kopang.domain.order;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository {
@@ -15,4 +17,6 @@ public interface OrderRepository {
 	int updateStatusToPending(Order order);
 
 	int updateStatusCancel(Order order);
+
+	List<Order> findExpiredOrders(LocalDateTime cutoffTime);
 }

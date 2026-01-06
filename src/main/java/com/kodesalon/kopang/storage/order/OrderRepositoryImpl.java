@@ -1,11 +1,14 @@
 package com.kodesalon.kopang.storage.order;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
 import com.kodesalon.kopang.domain.order.Order;
 import com.kodesalon.kopang.domain.order.OrderRepository;
+import com.kodesalon.kopang.domain.order.OrderStatus;
 
 @Repository
 public class OrderRepositoryImpl implements OrderRepository {
@@ -45,5 +48,14 @@ public class OrderRepositoryImpl implements OrderRepository {
 	@Override
 	public int updateStatusCancel(Order order) {
 		return orderJpaRepository.updateStatusCancel(order.getNo(), order.getStatus());
+	}
+
+	@Override
+	public List<Order> findExpiredOrders(LocalDateTime cutoffTime) {
+		return orderJpaRepository
+			.findExpiredOrders(List.of(OrderStatus.PENDING, OrderStatus.PAYMENT_IN_PROGRESS), cutoffTime)
+			.stream()
+			.map(OrderJpaEntity::toDomain)
+			.toList();
 	}
 }

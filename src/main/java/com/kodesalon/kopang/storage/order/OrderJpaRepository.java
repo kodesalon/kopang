@@ -1,5 +1,8 @@
 package com.kodesalon.kopang.storage.order;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -25,4 +28,7 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, Long> 
 	@Modifying
 	@Query("UPDATE OrderJpaEntity o SET o.status = :status WHERE o.no = :orderNo AND o.status <> 'CANCELLED'")
 	int updateStatusCancel(Long orderNo, OrderStatus status);
+
+	@Query("SELECT o FROM OrderJpaEntity o WHERE o.status IN :status AND o.orderedAt < :cutoffTime")
+	List<OrderJpaEntity> findExpiredOrders(List<OrderStatus> statuses, LocalDateTime cutoffTime);
 }
