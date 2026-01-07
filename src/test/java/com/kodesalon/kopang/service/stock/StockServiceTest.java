@@ -15,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.kodesalon.kopang.domain.stock.StockQuantity;
 import com.kodesalon.kopang.service.exception.NotFoundException;
 import com.kodesalon.kopang.domain.stock.Stock;
 import com.kodesalon.kopang.domain.stock.StockRepository;
@@ -40,7 +41,7 @@ class StockServiceTest {
 	@Test
 	void decrease_success() {
 		Long productNo = 1L;
-		Stock stock = new Stock(1L, productNo, 100);
+		Stock stock = new Stock(1L, productNo, StockQuantity.from(100));
 		given(stockRepository.findByProductNo(productNo))
 			.willReturn(Optional.of(stock));
 

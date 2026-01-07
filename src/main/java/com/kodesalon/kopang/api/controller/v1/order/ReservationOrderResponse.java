@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 import com.kodesalon.kopang.domain.order.Order;
 import com.kodesalon.kopang.domain.order.OrderStatus;
-import com.kodesalon.kopang.domain.stock.Stock;
+import com.kodesalon.kopang.domain.stock.StockQuantity;
 
 public record ReservationOrderResponse(
 	Long orderNo,
@@ -12,11 +12,11 @@ public record ReservationOrderResponse(
 	Integer quantity,
 	OrderStatus orderStatus
 ) {
-	public static ReservationOrderResponse of(Order order, Stock stock) {
+	public static ReservationOrderResponse of(Order order, StockQuantity quantity) {
 		return new ReservationOrderResponse(
 			order.getNo(),
 			order.getTotalPrice().getAmount(),
-			stock.getQuantity(),
+			quantity.getValue(),
 			order.getStatus()
 		);
 	}
