@@ -12,11 +12,5 @@ public interface OrderRepository {
 
 	void updateOrder(Order order);
 
-	int updateStatusToInProgress(Order order);
-
-	int updateStatusToPending(Order order);
-
-	int updateStatusCancel(Order order);
-
 	List<Order> findExpiredOrders(LocalDateTime cutoffTime);
 }
