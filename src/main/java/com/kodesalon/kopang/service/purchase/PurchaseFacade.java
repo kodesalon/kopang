@@ -1,9 +1,14 @@
 package com.kodesalon.kopang.service.purchase;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Component;
 
 import com.kodesalon.kopang.domain.order.Order;
 import com.kodesalon.kopang.domain.stock.StockQuantity;
+import com.kodesalon.kopang.domain.order.OrderProduct;
 import com.kodesalon.kopang.service.order.OrderService;
 import com.kodesalon.kopang.service.stock.StockReservationService;
 
@@ -32,5 +37,21 @@ public class PurchaseFacade {
 	public void cancel(Long orderNo, Long productNo, Integer count) {
 		orderService.cancelOrder(orderNo);
 		stockReservationService.increase(productNo, count);
+	}
+
+	public void cancelInBatch(List<Order> expiredOrders) {
+		List<Long> expiredNos = expiredOrders.stream()
+			.map(Order::getNo)
+			.toList();
+		orderService.cancelExpiredOrders(expiredNos);
+
+		Map<Long, Integer> productRestoreInfo = expiredOrders.stream()
+			.flatMap(order -> order.getProducts().stream())
+			.collect(Collectors.toMap(
+				OrderProduct::getProductNo,
+				OrderProduct::getCount,
+				Integer::sum
+			));
+		stockReservationService.restoreInBatch(productRestoreInfo);
 	}
 }
