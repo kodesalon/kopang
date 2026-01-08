@@ -59,7 +59,7 @@ public class OrderService {
 
 	@Transactional(readOnly = true)
 	public List<Order> findExpiredOrders(LocalDateTime now) {
-		LocalDateTime cutoffTime = Order.calculateCutoffTime(now);
+		LocalDateTime cutoffTime = Order.calculatePendingCutoffTime(now);
 		return orderRepository.findExpiredOrders(cutoffTime);
 	}
 
