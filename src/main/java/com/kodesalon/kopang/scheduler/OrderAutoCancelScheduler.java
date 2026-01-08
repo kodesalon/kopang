@@ -8,22 +8,27 @@ import org.springframework.stereotype.Component;
 
 import com.kodesalon.kopang.domain.order.Order;
 import com.kodesalon.kopang.service.order.OrderService;
+import com.kodesalon.kopang.service.purchase.PurchaseFacade;
 
 @Component
 public class OrderAutoCancelScheduler {
 
 	private final OrderService orderService;
+	private final PurchaseFacade purchaseFacade;
 
-	public OrderAutoCancelScheduler(OrderService orderService) {
+	public OrderAutoCancelScheduler(OrderService orderService, PurchaseFacade purchaseFacade) {
 		this.orderService = orderService;
+		this.purchaseFacade = purchaseFacade;
 	}
 
 	@Scheduled(fixedDelay = 60_000)
-	public void autoCancelOrders() {
-		List<Order> expiredOrders = orderService.findExpiredOrders(LocalDateTime.now());
-
-		for (Order expiredOrder : expiredOrders) {
-			orderService.cancelOrder(expiredOrder.getNo());
+	public void autoCancelExpiredOrders() {
+		while (true) {
+			List<Order> expiredOrders = orderService.findExpiredOrders(LocalDateTime.now());
+			if (expiredOrders.isEmpty()) {
+				break;
+			}
+			purchaseFacade.cancelInBatch(expiredOrders);
 		}
 	}
 }
