@@ -28,4 +28,9 @@ public class PurchaseFacade {
 			throw e;
 		}
 	}
+
+	public void cancel(Long orderNo, Long productNo, Integer count) {
+		orderService.cancelOrder(orderNo);
+		stockReservationService.increase(productNo, count);
+	}
 }
