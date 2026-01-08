@@ -8,6 +8,7 @@ import java.util.List;
 public class Order {
 
 	private static final long PENDING_EXPIRATION_MINUTES = 5;
+	private static final long IN_PROGRESS_EXPIRATION_MINUTES = 15;
 
 	private final Long no;
 	private final Long memberNo;
@@ -58,8 +59,12 @@ public class Order {
 		}
 	}
 
-	public static LocalDateTime calculateCutoffTime(LocalDateTime now) {
+	public static LocalDateTime calculatePendingCutoffTime(LocalDateTime now) {
 		return now.minusMinutes(PENDING_EXPIRATION_MINUTES);
+	}
+
+	public static LocalDateTime calculateInProgressCutoffTime(LocalDateTime now) {
+		return now.minusMinutes(IN_PROGRESS_EXPIRATION_MINUTES);
 	}
 
 	public static Order createPending(Long memberNo, Long productNo, Integer count, BigDecimal productPrice) {
