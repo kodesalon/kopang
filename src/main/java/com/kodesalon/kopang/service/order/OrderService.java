@@ -35,26 +35,26 @@ public class OrderService {
 
 	@Transactional
 	public void prepareOrderForPayment(Long orderNo, BigDecimal amount) {
-		Order preparedOrder = findOrder(orderNo).preparePayment(new Money(amount));
-		orderRepository.updateStatusToInProgress(preparedOrder); // 스케줄러와의 경합 시 처리 로직 필요
+		Order preparedOrder = findOrder(orderNo).preparePayment(new Money(amount), LocalDateTime.now());
+		orderRepository.updateOrder(preparedOrder);
 	}
 
 	@Transactional
 	public void rollbackToPending(Long orderNo) {
 		Order order = findOrder(orderNo).rollbackToPending();
-		orderRepository.updateStatusToPending(order); // 스케줄러와의 경합 시 처리 로직 필요
+		orderRepository.updateOrder(order);
 	}
 
 	@Transactional
 	public void pay(Long orderNo) {
 		Order order = findOrder(orderNo).pay();
-		orderRepository.updateOrder(order); // 스케줄러와의 경합 시 처리 로직 필요
+		orderRepository.updateOrder(order);
 	}
 
 	@Transactional
 	public void cancelOrder(Long orderNo) {
 		Order cancelledOrder = findOrder(orderNo).cancel();
-		orderRepository.updateStatusCancel(cancelledOrder); // 스케줄러와의 경합 시 처리 로직 필요
+		orderRepository.updateOrder(cancelledOrder);
 	}
 
 	@Transactional(readOnly = true)
