@@ -60,7 +60,7 @@ public class Order {
 	}
 
 	public static LocalDateTime calculatePendingCutoffTime(LocalDateTime now) {
-		return now.minusMinutes(PENDING_EXPIRATION_MINUTES);
+		return now.minusMinutes(PENDING_EXPIRATION_MINUTES).minusSeconds(5);
 	}
 
 	public static LocalDateTime calculateInProgressCutoffTime(LocalDateTime now) {
