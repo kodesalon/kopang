@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Order {
 
-	private static final long PAYMENT_EXPIRATION_MINUTES = 5;
+	private static final long PENDING_EXPIRATION_MINUTES = 5;
 
 	private final Long no;
 	private final Long memberNo;
@@ -16,8 +16,9 @@ public class Order {
 	private final List<OrderProduct> products;
 	private final LocalDateTime orderedAt;
 
-	public Order preparePayment(Money amount) {
+	public Order preparePayment(Money amount, LocalDateTime now) {
 		validateEditable();
+		checkExpired(now);
 		validateAmount(amount);
 		return new Order(no, memberNo, OrderStatus.PAYMENT_IN_PROGRESS, totalPrice, products, orderedAt);
 	}
@@ -35,15 +36,19 @@ public class Order {
 	}
 
 	public Order cancel() {
-		if (status.isPaid()) {
-			throw new IllegalStateException("이미 결제된 주문은 취소할 수 없습니다.");
-		}
+		validateEditable();
 		return new Order(no, memberNo, OrderStatus.CANCELLED, totalPrice, products, orderedAt);
 	}
 
 	private void validateEditable() {
 		if (status.isPaid() || status.isCanceled()) {
 			throw new IllegalStateException("이미 처리가 완료된 주문입니다.");
+		}
+	}
+
+	private void checkExpired(LocalDateTime now) {
+		if (now.isAfter(orderedAt.plusMinutes(PENDING_EXPIRATION_MINUTES))) {
+			throw new IllegalStateException("주문 유효 시간이 만료되었습니다.");
 		}
 	}
 
@@ -54,7 +59,7 @@ public class Order {
 	}
 
 	public static LocalDateTime calculateCutoffTime(LocalDateTime now) {
-		return now.minusMinutes(PAYMENT_EXPIRATION_MINUTES);
+		return now.minusMinutes(PENDING_EXPIRATION_MINUTES);
 	}
 
 	public static Order createPending(Long memberNo, Long productNo, Integer count, BigDecimal productPrice) {
