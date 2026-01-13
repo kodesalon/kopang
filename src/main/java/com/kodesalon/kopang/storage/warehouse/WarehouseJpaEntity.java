@@ -1,5 +1,8 @@
 package com.kodesalon.kopang.storage.warehouse;
 
+import com.kodesalon.kopang.domain.Address;
+import com.kodesalon.kopang.domain.Coordinate;
+import com.kodesalon.kopang.domain.warehouse.Warehouse;
 import com.kodesalon.kopang.domain.warehouse.WarehouseRegion;
 
 import jakarta.persistence.Column;
@@ -41,5 +44,11 @@ public class WarehouseJpaEntity {
 	private Double longitude;
 
 	protected WarehouseJpaEntity() {
+	}
+
+	public Warehouse toDomain() {
+		return new Warehouse(no, name, region,
+			new Address(zipCode, address, detail, new Coordinate(latitude, longitude))
+		);
 	}
 }
