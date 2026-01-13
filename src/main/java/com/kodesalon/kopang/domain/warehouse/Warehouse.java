@@ -15,4 +15,8 @@ public class Warehouse {
 		this.region = region;
 		this.address = address;
 	}
+
+	public Address getAddress() {
+		return address;
+	}
 }
