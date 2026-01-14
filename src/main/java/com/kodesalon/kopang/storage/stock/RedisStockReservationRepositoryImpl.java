@@ -14,7 +14,7 @@ import com.kodesalon.kopang.domain.stock.StockReservationRepository;
 @Repository
 public class RedisStockReservationRepositoryImpl implements StockReservationRepository {
 
-	private static final String PRODUCT_STOCK_KEY_FORMAT = "product:%d:stock";
+	private static final String PRODUCT_STOCK_KEY_FORMAT = "stock:product:%d:warehouse:%s";
 
 	private final RedisTemplate<String, String> redisTemplate;
 	private final DefaultRedisScript<Long> decreaseStockScript;
@@ -27,16 +27,16 @@ public class RedisStockReservationRepositoryImpl implements StockReservationRepo
 	}
 
 	@Override
-	public StockQuantity decreaseStock(Long productNo, Integer count) {
+	public Optional<StockQuantity> decreaseStock(String warehouseName, Long productNo, Integer count) {
 		Long result = redisTemplate.execute(
 			decreaseStockScript,
-			List.of(String.format(PRODUCT_STOCK_KEY_FORMAT, productNo)),
+			List.of(String.format(PRODUCT_STOCK_KEY_FORMAT, productNo, warehouseName)),
 			String.valueOf(count)
 		);
-		Integer remainQuantity = Optional.of(result)
+		return Optional.of(result)
+			.filter(remain -> remain >= 0)
 			.map(Long::intValue)
-			.orElseThrow();
-		return StockQuantity.from(remainQuantity);
+			.map(StockQuantity::from);
 	}
 
 	@Override
