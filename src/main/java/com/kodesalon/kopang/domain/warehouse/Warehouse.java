@@ -16,6 +16,14 @@ public class Warehouse {
 		this.address = address;
 	}
 
+	public Long getNo() {
+		return no;
+	}
+
+	public String getRegionName() {
+		return region.name();
+	}
+
 	public Address getAddress() {
 		return address;
 	}
