@@ -56,7 +56,7 @@ public class PurchaseFacade {
 			}
 		}
 		if (allocatedWarehouse == null) {
-			throw  SoldOutException.warehouse(productNo);
+			throw SoldOutException.warehouse(productNo);
 		}
 
 		try {
