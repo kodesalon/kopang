@@ -12,7 +12,9 @@ public interface OrderRepository {
 
 	void updateOrder(Order order);
 
-	List<Order> findExpiredOrders(LocalDateTime pendingCutoffTime, LocalDateTime inProgressCutoffTime);
+	List<Order> findExpiredPendingOrders(LocalDateTime cutoffTime);
+
+	List<Order> findExpiredInProgressOrders(LocalDateTime cutoffTime);
 
 	void updateStatusToCancelInBatch(List<Long> expiredNos);
 }

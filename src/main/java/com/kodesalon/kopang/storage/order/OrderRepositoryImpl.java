@@ -1,6 +1,8 @@
 package com.kodesalon.kopang.storage.order;
 
-import static com.kodesalon.kopang.domain.order.OrderStatus.*;
+import static com.kodesalon.kopang.domain.order.OrderStatus.CANCELLED;
+import static com.kodesalon.kopang.domain.order.OrderStatus.PAYMENT_IN_PROGRESS;
+import static com.kodesalon.kopang.domain.order.OrderStatus.PENDING;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,10 +41,20 @@ public class OrderRepositoryImpl implements OrderRepository {
 	}
 
 	@Override
-	public List<Order> findExpiredOrders(LocalDateTime pendingCutoffTime, LocalDateTime inProgressCutoffTime) {
+	public List<Order> findExpiredPendingOrders(LocalDateTime cutoffTime) {
 		Pageable limit = PageRequest.of(0, 1000);
 		return orderJpaRepository
-			.findExpiredOrders(PENDING, pendingCutoffTime, PAYMENT_IN_PROGRESS, inProgressCutoffTime, limit)
+			.findExpiredOrders(PENDING, cutoffTime, limit)
+			.stream()
+			.map(OrderJpaEntity::toDomain)
+			.toList();
+	}
+
+	@Override
+	public List<Order> findExpiredInProgressOrders(LocalDateTime cutoffTime) {
+		Pageable limit = PageRequest.of(0, 100);
+		return orderJpaRepository
+			.findExpiredOrders(PAYMENT_IN_PROGRESS, cutoffTime, limit)
 			.stream()
 			.map(OrderJpaEntity::toDomain)
 			.toList();
