@@ -21,10 +21,10 @@ public class OrderAutoCancelScheduler {
 		this.purchaseFacade = purchaseFacade;
 	}
 
-	@Scheduled(fixedDelay = 60_000)
-	public void autoCancelExpiredOrders() {
+	@Scheduled(fixedDelay = 30_000)
+	public void autoCancelExpiredPendingOrders() {
 		while (true) {
-			List<Order> expiredOrders = orderService.findExpiredOrders(LocalDateTime.now());
+			List<Order> expiredOrders = orderService.findExpiredPendingOrders(LocalDateTime.now());
 			if (expiredOrders.isEmpty()) {
 				break;
 			}
