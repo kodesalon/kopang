@@ -19,14 +19,9 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, Long> 
 	void updateOrder(Long orderNo, OrderStatus status);
 
 	@Query("""
-		SELECT o FROM OrderJpaEntity o
-		WHERE (o.status = :pending AND o.orderedAt < :pendingCutoffTime)
-		OR (o.status = :innProgress AND o.orderedAt < :inProgressCutoffTime)""")
-	List<OrderJpaEntity> findExpiredOrders(
-		OrderStatus pending, LocalDateTime pendingCutoffTime,
-		OrderStatus innProgress, LocalDateTime inProgressCutoffTime,
-		Pageable pageable
-	);
+		SELECT o FROM OrderJpaEntity o JOIN FETCH o.orderProducts
+		WHERE o.status = :status AND o.orderedAt < :cutoffTime""")
+	List<OrderJpaEntity> findExpiredOrders(OrderStatus status, LocalDateTime cutoffTime, Pageable pageable);
 
 	@Modifying
 	@Query("UPDATE OrderJpaEntity o SET o.status = :canceled WHERE o.no IN :expiredNos AND o.status IN :statuses")
