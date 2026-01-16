@@ -59,6 +59,18 @@ public class Order {
 		}
 	}
 
+	/**
+	 * 선착순 이벤트용: 단일 상품 정보를 반환
+	 * 주의: 현재 요구사항상 선착순 주문은 반드시 1개의 상품만 포함.
+	 * 추후 장바구니 주문 등으로 확장 시 이 메서드 사용 불가 (별도 로직 분리 필요)
+	 */
+	public OrderProduct getEventProduct() {
+		if (this.products == null || this.products.size() != 1) {
+			throw new IllegalStateException(String.format("선착순 이벤트 주문은 1개의 상품만 가질 수 있습니다. Order [%d]", no));
+		}
+		return this.products.getFirst();
+	}
+
 	public static LocalDateTime calculatePendingCutoffTime(LocalDateTime now) {
 		return now.minusMinutes(PENDING_EXPIRATION_MINUTES).minusSeconds(5);
 	}
