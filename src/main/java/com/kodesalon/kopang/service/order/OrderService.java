@@ -58,10 +58,15 @@ public class OrderService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<Order> findExpiredOrders(LocalDateTime now) {
+	public List<Order> findExpiredPendingOrders(LocalDateTime now) {
 		LocalDateTime pendingCutoffTime = Order.calculatePendingCutoffTime(now);
+		return orderRepository.findExpiredPendingOrders(pendingCutoffTime);
+	}
+
+	@Transactional(readOnly = true)
+	public List<Order> findExpiredInProgressOrders(LocalDateTime now) {
 		LocalDateTime inProgressCutoffTime = Order.calculateInProgressCutoffTime(now);
-		return orderRepository.findExpiredOrders(pendingCutoffTime, inProgressCutoffTime);
+		return orderRepository.findExpiredInProgressOrders(inProgressCutoffTime);
 	}
 
 	@Transactional
