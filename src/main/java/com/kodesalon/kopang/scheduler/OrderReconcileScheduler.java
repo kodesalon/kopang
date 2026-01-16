@@ -28,7 +28,7 @@ public class OrderReconcileScheduler {
 			if (expiredOrders.isEmpty()) {
 				break;
 			}
-			expiredOrders.forEach(paymentRecoveryOrchestrator::reconcile);
+			expiredOrders.forEach(paymentRecoveryOrchestrator::recover);
 		}
 	}
 }
