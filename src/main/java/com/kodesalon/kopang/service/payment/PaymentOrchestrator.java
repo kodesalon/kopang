@@ -44,6 +44,7 @@ public class PaymentOrchestrator {
 
 		switch (paymentResult.status()) {
 			case "DONE" -> {
+				orderService.pay(orderNo);
 				return paymentService.completePayment(orderNo, paymentResult);
 			}
 			case "ABORTED" -> {
