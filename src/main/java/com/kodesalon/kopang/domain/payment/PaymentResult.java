@@ -9,7 +9,13 @@ public record PaymentResult(
 	Long orderNo,
 	Money amount,
 	LocalDateTime approvedAt,
-	String status,
+	Status status,
 	String failureMessage
 ) {
+	public enum Status {
+		DONE,
+		ABORTED,
+		EXPIRED,
+		;
+	}
 }
