@@ -35,8 +35,8 @@ public class PaymentRecoveryOrchestrator {
 			PaymentResult paymentResult = paymentClient.retrieveByOrder(orderNo);
 
 			switch (paymentResult.status()) {
-				case "DONE" -> paymentService.completePayment(orderNo, paymentResult);
-				case "ABORTED", "EXPIRED" -> {
+				case DONE -> paymentService.completePayment(orderNo, paymentResult);
+				case ABORTED, EXPIRED -> {
 					OrderProduct eventProduct = order.getEventProduct();
 					paymentService.registerFailedPayment(orderNo, paymentResult);
 					purchaseFacade.cancel(orderNo, eventProduct.getProductNo(), eventProduct.getCount());

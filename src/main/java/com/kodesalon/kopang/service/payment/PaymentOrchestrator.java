@@ -43,20 +43,20 @@ public class PaymentOrchestrator {
 		}
 
 		switch (paymentResult.status()) {
-			case "DONE" -> {
+			case DONE -> {
 				return paymentService.completePayment(orderNo, paymentResult);
 			}
-			case "ABORTED" -> {
+			case ABORTED -> {
 				paymentService.registerFailedPayment(orderNo, paymentResult);
 				orderService.rollbackToPending(orderNo);
 				throw PaymentFailedException.aborted(paymentKey, orderNo, paymentResult.failureMessage());
 			}
-			case "EXPIRED" -> {
+			case EXPIRED -> {
 				paymentService.registerFailedPayment(orderNo, paymentResult);
 				purchaseFacade.cancel(orderNo, productNo, count);
 				throw PaymentFailedException.expired(paymentKey, orderNo, paymentResult.failureMessage());
 			}
-			default -> throw PaymentFailedException.invalid(paymentKey, orderNo, paymentResult.status());
+			default -> throw PaymentFailedException.invalid(paymentKey, orderNo, paymentResult.status().name());
 		}
 	}
 }
