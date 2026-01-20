@@ -1,6 +1,7 @@
 package com.kodesalon.kopang.service.stock;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -16,8 +17,8 @@ public class StockReservationService {
 		this.stockReservationRepository = stockReservationRepository;
 	}
 
-	public StockQuantity decrease(Long productNo, Integer count) {
-		return stockReservationRepository.decreaseStock(productNo, count);
+	public Optional<StockQuantity> decrease(String warehouseName, Long productNo, Integer count) {
+		return stockReservationRepository.decreaseStock(warehouseName, productNo, count);
 	}
 
 	public void increase(Long productNo, Integer count) {
