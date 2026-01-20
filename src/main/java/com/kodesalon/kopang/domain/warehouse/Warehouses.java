@@ -1,11 +1,12 @@
 package com.kodesalon.kopang.domain.warehouse;
 
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
 import com.kodesalon.kopang.domain.Address;
 
-public class Warehouses {
+public class Warehouses implements Iterable<Warehouse> {
 
 	private final List<Warehouse> values;
 
@@ -22,7 +23,8 @@ public class Warehouses {
 		return new Warehouses(sorted);
 	}
 
-	public List<Warehouse> getValues() {
-		return values;
+	@Override
+	public Iterator<Warehouse> iterator() {
+		return values.iterator();
 	}
 }
