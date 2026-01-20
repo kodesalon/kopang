@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.kodesalon.kopang.domain.order.Orders;
 import com.kodesalon.kopang.domain.stock.StockQuantity;
 import com.kodesalon.kopang.domain.stock.StockReservationRepository;
 
@@ -25,9 +26,10 @@ public class StockReservationService {
 		stockReservationRepository.increaseStock(warehouseNo, productNo, count);
 	}
 
-	public void restoreInBatch(Map<Long, Integer> productRestoreInfo) {
-		for (Map.Entry<Long, Integer> entry : productRestoreInfo.entrySet()) {
-			stockReservationRepository.increaseStock(entry.getKey(), entry.getValue());
+	public void restoreInBatch(Map<Orders.StockKey, Integer> productRestoreInfo) {
+		for (Map.Entry<Orders.StockKey, Integer> entry : productRestoreInfo.entrySet()) {
+			Orders.StockKey stockKey = entry.getKey();
+			stockReservationRepository.increaseStock(stockKey.warehouseNo(), stockKey.productNo(), entry.getValue());
 		}
 	}
 }
