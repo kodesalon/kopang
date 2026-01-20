@@ -69,8 +69,8 @@ public class PurchaseFacade {
 	}
 
 	public void cancel(Long orderNo, Long productNo, Integer count) {
-		orderService.cancelOrder(orderNo);
-		stockReservationService.increase(productNo, count);
+		Order cancelled = orderService.cancelOrder(orderNo);
+		stockReservationService.increase(cancelled.getEventProduct().getWarehouseNo(), productNo, count);
 	}
 
 	public void cancelInBatch(List<Order> expiredOrders) {
