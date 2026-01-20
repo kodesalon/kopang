@@ -60,7 +60,7 @@ public class PurchaseFacade {
 		}
 
 		try {
-			Order order = orderService.createOrderPending(memberNo, productNo, count);
+			Order order = orderService.createOrderPending(memberNo, productNo, allocatedWarehouse.getNo(), count);
 			return new ReservationOrderResult(finalStock, order);
 		} catch (Exception e) {
 			stockReservationService.increase(productNo, count);
