@@ -21,4 +21,8 @@ public class Warehouses {
 			.toList();
 		return new Warehouses(sorted);
 	}
+
+	public List<Warehouse> getValues() {
+		return values;
+	}
 }

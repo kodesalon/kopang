@@ -15,4 +15,8 @@ public class MemberAddress {
 		this.alias = alias;
 		this.address = address;
 	}
+
+	public Address getAddress() {
+		return address;
+	}
 }
