@@ -17,12 +17,12 @@ public class StockReservationService {
 		this.stockReservationRepository = stockReservationRepository;
 	}
 
-	public Optional<StockQuantity> decrease(String warehouseName, Long productNo, Integer count) {
-		return stockReservationRepository.decreaseStock(warehouseName, productNo, count);
+	public Optional<StockQuantity> decrease(Long warehouseNo, Long productNo, Integer count) {
+		return stockReservationRepository.decreaseStock(warehouseNo, productNo, count);
 	}
 
-	public void increase(Long productNo, Integer count) {
-		stockReservationRepository.increaseStock(productNo, count);
+	public void increase(Long warehouseNo, Long productNo, Integer count) {
+		stockReservationRepository.increaseStock(warehouseNo, productNo, count);
 	}
 
 	public void restoreInBatch(Map<Long, Integer> productRestoreInfo) {
