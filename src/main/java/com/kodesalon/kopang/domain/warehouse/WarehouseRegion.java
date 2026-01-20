@@ -1,5 +1,5 @@
 package com.kodesalon.kopang.domain.warehouse;
 
 public enum WarehouseRegion {
-	SEOUL, DAEJEON, BUSAN;
+	SEOUL, DAEJEON, DAEGU, BUSAN;
 }
