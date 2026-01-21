@@ -1,16 +1,13 @@
 package com.kodesalon.kopang.service.purchase;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
 import com.kodesalon.kopang.domain.Address;
 import com.kodesalon.kopang.domain.order.Order;
+import com.kodesalon.kopang.domain.order.Orders;
 import com.kodesalon.kopang.domain.stock.StockQuantity;
-import com.kodesalon.kopang.domain.order.OrderProduct;
 import com.kodesalon.kopang.domain.warehouse.Warehouse;
 import com.kodesalon.kopang.domain.warehouse.Warehouses;
 import com.kodesalon.kopang.service.exception.SoldOutException;
@@ -47,8 +44,8 @@ public class PurchaseFacade {
 
 		Warehouse allocatedWarehouse = null;
 		StockQuantity finalStock = null;
-		for (Warehouse warehouse : warehouses.getValues()) {
-			Optional<StockQuantity> sq = stockReservationService.decrease(warehouse.getRegionName(), productNo, count);
+		for (Warehouse warehouse : warehouses) {
+			Optional<StockQuantity> sq = stockReservationService.decrease(warehouse.getNo(), productNo, count);
 			if (sq.isPresent()) {
 				finalStock = sq.get();
 				allocatedWarehouse = warehouse;
@@ -60,32 +57,21 @@ public class PurchaseFacade {
 		}
 
 		try {
-			Order order = orderService.createOrderPending(memberNo, productNo, count);
+			Order order = orderService.createOrderPending(memberNo, productNo, allocatedWarehouse.getNo(), count);
 			return new ReservationOrderResult(finalStock, order);
 		} catch (Exception e) {
-			stockReservationService.increase(productNo, count);
+			stockReservationService.increase(allocatedWarehouse.getNo(), productNo, count);
 			throw e;
 		}
 	}
 
 	public void cancel(Long orderNo, Long productNo, Integer count) {
-		orderService.cancelOrder(orderNo);
-		stockReservationService.increase(productNo, count);
+		Order cancelled = orderService.cancelOrder(orderNo);
+		stockReservationService.increase(cancelled.getEventProduct().getWarehouseNo(), productNo, count);
 	}
 
-	public void cancelInBatch(List<Order> expiredOrders) {
-		List<Long> expiredNos = expiredOrders.stream()
-			.map(Order::getNo)
-			.toList();
-		orderService.cancelExpiredOrders(expiredNos);
-
-		Map<Long, Integer> productRestoreInfo = expiredOrders.stream()
-			.flatMap(order -> order.getProducts().stream())
-			.collect(Collectors.toMap(
-				OrderProduct::getProductNo,
-				OrderProduct::getCount,
-				Integer::sum
-			));
-		stockReservationService.restoreInBatch(productRestoreInfo);
+	public void cancelInBatch(Orders expiredOrders) {
+		orderService.cancelExpiredOrders(expiredOrders.getAllIds());
+		stockReservationService.restoreInBatch(expiredOrders.groupByStockKey());
 	}
 }

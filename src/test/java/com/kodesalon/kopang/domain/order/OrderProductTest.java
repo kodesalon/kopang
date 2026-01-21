@@ -14,10 +14,11 @@ class OrderProductTest {
 	@Test
 	void create() {
 		long productNo = 1L;
+		long warehouseNo = 1L;
 		int count = 2;
 		BigDecimal productPrice = BigDecimal.valueOf(1000);
 
-		OrderProduct orderProduct = OrderProduct.create(productNo, count, productPrice);
+		OrderProduct orderProduct = OrderProduct.create(productNo, warehouseNo, count, productPrice);
 
 		Money expectedPrice = new Money(BigDecimal.valueOf(count * productPrice.doubleValue()));
 		assertAll(

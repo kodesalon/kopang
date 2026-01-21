@@ -38,16 +38,17 @@ class OrderServiceTest {
 	void createOrder_success() {
 		Long memberNo = 1L;
 		Long productNo = 1L;
+		Long warehouseNo = 1L;
 		Integer count = 2;
 		BigDecimal productPrice = new BigDecimal(1000);
 		Product product = new Product(productNo, "테스트상품 이름", "테스트상품 설명", productPrice);
 		given(productRepository.findByProductNo(productNo))
 			.willReturn(Optional.of(product));
-		Order expectedResult = Order.createPending(memberNo, productNo, count, productPrice);
+		Order expectedResult = Order.createPending(memberNo, productNo, warehouseNo, count, productPrice);
 		given(orderRepository.register(any(Order.class)))
 			.willReturn(expectedResult);
 
-		Order result = orderService.createOrderPending(memberNo, productNo, count);
+		Order result = orderService.createOrderPending(memberNo, productNo, warehouseNo, count);
 
 		Money totalPrice = new Money(count.longValue() * productPrice.longValue());
 		assertAll(
@@ -64,11 +65,12 @@ class OrderServiceTest {
 	@Test
 	void createOrder_fail_productNotFound() {
 		Long productNo = 1L;
+		Long warehouseNo = 1L;
 		given(productRepository.findByProductNo(productNo))
 			.willReturn(Optional.empty());
 
 		assertAll(
-			() -> assertThatThrownBy(() -> orderService.createOrderPending(1L, productNo, 1))
+			() -> assertThatThrownBy(() -> orderService.createOrderPending(1L, productNo, warehouseNo, 1))
 				.isInstanceOf(NotFoundException.class)
 				.hasMessage(NotFoundException.product(productNo).getMessage()),
 			() -> verify(orderRepository, times(0)).register(any())

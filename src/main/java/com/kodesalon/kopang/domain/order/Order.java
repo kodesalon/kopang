@@ -79,9 +79,9 @@ public class Order {
 		return now.minusMinutes(IN_PROGRESS_EXPIRATION_MINUTES);
 	}
 
-	public static Order createPending(Long memberNo, Long productNo, Integer count, BigDecimal productPrice) {
+	public static Order createPending(Long memberNo, Long productNo, Long warehouseNo, Integer count, BigDecimal productPrice) {
 		List<OrderProduct> orderProducts = new ArrayList<>();
-		orderProducts.add(OrderProduct.create(productNo, count, productPrice));
+		orderProducts.add(OrderProduct.create(productNo, warehouseNo, count, productPrice));
 		return new Order(null, memberNo, OrderStatus.PENDING, calculateTotalMoney(orderProducts), orderProducts, null);
 	}
 

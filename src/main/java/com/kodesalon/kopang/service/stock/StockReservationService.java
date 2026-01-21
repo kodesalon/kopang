@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.kodesalon.kopang.domain.order.Orders;
 import com.kodesalon.kopang.domain.stock.StockQuantity;
 import com.kodesalon.kopang.domain.stock.StockReservationRepository;
 
@@ -17,17 +18,18 @@ public class StockReservationService {
 		this.stockReservationRepository = stockReservationRepository;
 	}
 
-	public Optional<StockQuantity> decrease(String warehouseName, Long productNo, Integer count) {
-		return stockReservationRepository.decreaseStock(warehouseName, productNo, count);
+	public Optional<StockQuantity> decrease(Long warehouseNo, Long productNo, Integer count) {
+		return stockReservationRepository.decreaseStock(warehouseNo, productNo, count);
 	}
 
-	public void increase(Long productNo, Integer count) {
-		stockReservationRepository.increaseStock(productNo, count);
+	public void increase(Long warehouseNo, Long productNo, Integer count) {
+		stockReservationRepository.increaseStock(warehouseNo, productNo, count);
 	}
 
-	public void restoreInBatch(Map<Long, Integer> productRestoreInfo) {
-		for (Map.Entry<Long, Integer> entry : productRestoreInfo.entrySet()) {
-			stockReservationRepository.increaseStock(entry.getKey(), entry.getValue());
+	public void restoreInBatch(Map<Orders.StockKey, Integer> productRestoreInfo) {
+		for (Map.Entry<Orders.StockKey, Integer> entry : productRestoreInfo.entrySet()) {
+			Orders.StockKey stockKey = entry.getKey();
+			stockReservationRepository.increaseStock(stockKey.warehouseNo(), stockKey.productNo(), entry.getValue());
 		}
 	}
 }
