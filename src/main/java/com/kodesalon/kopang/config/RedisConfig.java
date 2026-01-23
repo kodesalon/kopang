@@ -11,8 +11,6 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 public class RedisConfig {
 
-	public static final String CACHE_PRODUCT_WAREHOUSES = "product:warehouses";
-
 	private final String host;
 	private final int port;
 
