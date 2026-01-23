@@ -16,4 +16,12 @@ public class Coordinate {
 		return new Point2D.Double(latitude, longitude)
 			.distance(other.latitude, other.longitude);
 	}
+
+	public Double getLatitude() {
+		return latitude;
+	}
+
+	public Double getLongitude() {
+		return longitude;
+	}
 }

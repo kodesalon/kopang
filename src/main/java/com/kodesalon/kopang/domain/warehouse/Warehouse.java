@@ -20,6 +20,14 @@ public class Warehouse {
 		return no;
 	}
 
+	public String getName() {
+		return name;
+	}
+
+	public WarehouseRegion getRegion() {
+		return region;
+	}
+
 	public String getRegionName() {
 		return region.name();
 	}

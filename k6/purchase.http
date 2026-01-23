@@ -1,0 +1,11 @@
+@BASE_URL = http://3.36.64.35:8080
+@memberNo = 1
+
+### OrderReservation: 주문 생성 요청
+POST {{BASE_URL}}/api/v1/orders?memberNo={{memberNo}}
+Content-Type: application/json
+
+{
+  "productNo": 1,
+  "count": 1
+}

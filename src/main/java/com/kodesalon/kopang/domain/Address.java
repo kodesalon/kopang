@@ -17,4 +17,20 @@ public class Address {
 	public Double distanceTo(Address otherAddress) {
 		return coordinate.calculateDistance(otherAddress.coordinate);
 	}
+
+	public String getZipCode() {
+		return zipCode;
+	}
+
+	public String getDefaultAddress() {
+		return defaultAddress;
+	}
+
+	public String getDetail() {
+		return detail;
+	}
+
+	public Coordinate getCoordinate() {
+		return coordinate;
+	}
 }
