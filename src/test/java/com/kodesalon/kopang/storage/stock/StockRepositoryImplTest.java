@@ -12,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 
 import com.kodesalon.kopang.domain.stock.Stock;
+import com.kodesalon.kopang.domain.stock.StockQuantity;
 import com.kodesalon.kopang.domain.stock.StockRepository;
 
 @DataJpaTest
@@ -26,7 +27,8 @@ class StockRepositoryImplTest {
 	@Test
 	void findByProductNo_success() {
 		Long productNo = 1L;
-		StockJpaEntity entity = new StockJpaEntity(productNo, 100);
+		Long warehouseNo = 1L;
+		StockJpaEntity entity = new StockJpaEntity(productNo, warehouseNo, 100);
 		stockJpaRepository.save(entity);
 
 		Optional<Stock> result = stockRepository.findByProductNo(productNo);
@@ -50,13 +52,13 @@ class StockRepositoryImplTest {
 	@Test
 	void updateStock_success() {
 		// given
-		StockJpaEntity entity = new StockJpaEntity(1L, 100);
+		StockJpaEntity entity = new StockJpaEntity(1L, 1L, 100);
 		tem.persist(entity);
 		tem.flush();
 		tem.clear();
 
 		// when
-		Stock stock = new Stock(entity.getNo(), 1L, 99);
+		Stock stock = new Stock(entity.getNo(), 1L, StockQuantity.from(99));
 		stockRepository.updateStock(stock);
 
 		// then

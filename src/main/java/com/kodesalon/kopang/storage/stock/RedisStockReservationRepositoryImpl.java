@@ -8,13 +8,13 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Repository;
 
-import com.kodesalon.kopang.domain.stock.Stock;
+import com.kodesalon.kopang.domain.stock.StockQuantity;
 import com.kodesalon.kopang.domain.stock.StockReservationRepository;
 
 @Repository
 public class RedisStockReservationRepositoryImpl implements StockReservationRepository {
 
-	private static final String PRODUCT_STOCK_KEY_FORMAT = "product:%d:stock";
+	private static final String PRODUCT_STOCK_KEY_FORMAT = "stock:product:%d:warehouse:%d";
 
 	private final RedisTemplate<String, String> redisTemplate;
 	private final DefaultRedisScript<Long> decreaseStockScript;
@@ -27,20 +27,20 @@ public class RedisStockReservationRepositoryImpl implements StockReservationRepo
 	}
 
 	@Override
-	public Stock decreaseStock(Long productNo, Integer count) {
+	public Optional<StockQuantity> decreaseStock(Long warehouseNo, Long productNo, Integer count) {
 		Long result = redisTemplate.execute(
 			decreaseStockScript,
-			List.of(String.format(PRODUCT_STOCK_KEY_FORMAT, productNo)),
+			List.of(String.format(PRODUCT_STOCK_KEY_FORMAT, productNo, warehouseNo)),
 			String.valueOf(count)
 		);
-		Integer remainQuantity = Optional.of(result)
+		return Optional.of(result)
+			.filter(remain -> remain >= 0)
 			.map(Long::intValue)
-			.orElseThrow();
-		return Stock.of(productNo, remainQuantity);
+			.map(StockQuantity::from);
 	}
 
 	@Override
-	public void increaseStock(Long productNo, Integer count) {
-		redisTemplate.opsForValue().increment(String.format(PRODUCT_STOCK_KEY_FORMAT, productNo), count);
+	public void increaseStock(Long warehouseNo, Long productNo, Integer count) {
+		redisTemplate.opsForValue().increment(String.format(PRODUCT_STOCK_KEY_FORMAT, productNo, warehouseNo), count);
 	}
 }

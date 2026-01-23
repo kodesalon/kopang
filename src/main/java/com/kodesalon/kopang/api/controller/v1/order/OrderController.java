@@ -28,6 +28,6 @@ public class OrderController {
 	) {
 		ReservationOrderResult result = purchaseFacade.reserve(memberNo, request.productNo(), request.count());
 		return ResponseEntity.status(HttpStatus.CREATED)
-			.body(ReservationOrderResponse.of(result.order(), result.stock()));
+			.body(ReservationOrderResponse.of(result.order(), result.quantity()));
 	}
 }

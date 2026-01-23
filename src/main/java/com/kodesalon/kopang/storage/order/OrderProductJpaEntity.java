@@ -36,6 +36,9 @@ public class OrderProductJpaEntity {
 	private Long productNo;
 
 	@Column(nullable = false)
+	private Long warehouseNo;
+
+	@Column(nullable = false)
 	private BigDecimal orderPrice;
 
 	@Column(nullable = false)
@@ -46,9 +49,16 @@ public class OrderProductJpaEntity {
 	protected OrderProductJpaEntity() {
 	}
 
-	public OrderProductJpaEntity(OrderJpaEntity order, Long productNo, BigDecimal orderPrice, Integer count) {
+	public OrderProductJpaEntity(
+		OrderJpaEntity order,
+		Long productNo,
+		Long warehouseNo,
+		BigDecimal orderPrice,
+		Integer count
+	) {
 		this.order = order;
 		this.productNo = productNo;
+		this.warehouseNo = warehouseNo;
 		this.orderPrice = orderPrice;
 		this.count = count;
 	}
@@ -57,12 +67,13 @@ public class OrderProductJpaEntity {
 		return new OrderProductJpaEntity(
 			orderJpaEntity,
 			orderProduct.getProductNo(),
+			orderProduct.getWarehouseNo(),
 			orderProduct.getOrderPrice().getAmount(),
 			orderProduct.getCount()
 		);
 	}
 
 	public OrderProduct toDomain() {
-		return OrderProduct.of(no, productNo, count, orderPrice);
+		return OrderProduct.of(no, productNo, warehouseNo, count, orderPrice);
 	}
 }

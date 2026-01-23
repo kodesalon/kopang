@@ -1,6 +1,7 @@
 package com.kodesalon.kopang.storage.stock;
 
 import com.kodesalon.kopang.domain.stock.Stock;
+import com.kodesalon.kopang.domain.stock.StockQuantity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,18 +22,22 @@ public class StockJpaEntity {
 	private Long productNo;
 
 	@Column(nullable = false)
+	private Long warehouseNo;
+
+	@Column(nullable = false)
 	private Integer quantity;
 
 	protected StockJpaEntity() {
 	}
 
-	public StockJpaEntity(Long productNo, Integer quantity) {
+	public StockJpaEntity(Long productNo, Long warehouseNo, Integer quantity) {
 		this.productNo = productNo;
+		this.warehouseNo = warehouseNo;
 		this.quantity = quantity;
 	}
 
 	public Stock toDomain() {
-		return new Stock(no, productNo, quantity);
+		return new Stock(no, productNo, StockQuantity.from(quantity));
 	}
 
 	public Long getNo() {
