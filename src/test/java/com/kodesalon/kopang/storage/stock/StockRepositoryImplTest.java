@@ -27,7 +27,8 @@ class StockRepositoryImplTest {
 	@Test
 	void findByProductNo_success() {
 		Long productNo = 1L;
-		StockJpaEntity entity = new StockJpaEntity(productNo, 100);
+		Long warehouseNo = 1L;
+		StockJpaEntity entity = new StockJpaEntity(productNo, warehouseNo, 100);
 		stockJpaRepository.save(entity);
 
 		Optional<Stock> result = stockRepository.findByProductNo(productNo);
@@ -51,7 +52,7 @@ class StockRepositoryImplTest {
 	@Test
 	void updateStock_success() {
 		// given
-		StockJpaEntity entity = new StockJpaEntity(1L, 100);
+		StockJpaEntity entity = new StockJpaEntity(1L, 1L, 100);
 		tem.persist(entity);
 		tem.flush();
 		tem.clear();

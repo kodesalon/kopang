@@ -22,13 +22,17 @@ public class StockJpaEntity {
 	private Long productNo;
 
 	@Column(nullable = false)
+	private Long warehouseNo;
+
+	@Column(nullable = false)
 	private Integer quantity;
 
 	protected StockJpaEntity() {
 	}
 
-	public StockJpaEntity(Long productNo, Integer quantity) {
+	public StockJpaEntity(Long productNo, Long warehouseNo, Integer quantity) {
 		this.productNo = productNo;
+		this.warehouseNo = warehouseNo;
 		this.quantity = quantity;
 	}
 

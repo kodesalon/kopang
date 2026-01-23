@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.kodesalon.kopang.domain.order.Order;
+import com.kodesalon.kopang.domain.order.Orders;
 import com.kodesalon.kopang.service.order.OrderService;
 import com.kodesalon.kopang.service.purchase.PurchaseFacade;
 
@@ -24,7 +25,7 @@ public class OrderAutoCancelScheduler {
 	@Scheduled(fixedDelay = 30_000)
 	public void autoCancelExpiredPendingOrders() {
 		while (true) {
-			List<Order> expiredOrders = orderService.findExpiredPendingOrders(LocalDateTime.now());
+			Orders expiredOrders = orderService.findExpiredPendingOrders(LocalDateTime.now());
 			if (expiredOrders.isEmpty()) {
 				break;
 			}

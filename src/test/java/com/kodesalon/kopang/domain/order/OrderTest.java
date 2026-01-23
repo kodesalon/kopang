@@ -21,7 +21,7 @@ class OrderTest {
 		Integer count = 1;
 		BigDecimal productPrice = BigDecimal.valueOf(1000);
 
-		Order order = Order.createPending(1L, 1L, count, productPrice);
+		Order order = Order.createPending(1L, 1L, 1L, count, productPrice);
 
 		Money totalPrice = new Money(count.longValue() * productPrice.longValue());
 		assertAll(

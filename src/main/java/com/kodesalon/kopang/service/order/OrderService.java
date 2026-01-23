@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kodesalon.kopang.domain.order.Money;
 import com.kodesalon.kopang.domain.order.Order;
 import com.kodesalon.kopang.domain.order.OrderRepository;
+import com.kodesalon.kopang.domain.order.Orders;
 import com.kodesalon.kopang.domain.product.Product;
 import com.kodesalon.kopang.domain.product.ProductRepository;
 import com.kodesalon.kopang.service.exception.NotFoundException;
@@ -26,10 +27,10 @@ public class OrderService {
 	}
 
 	@Transactional
-	public Order createOrderPending(Long memberNo, Long productNo, Integer count) {
+	public Order createOrderPending(Long memberNo, Long productNo, Long warehouseNo, Integer count) {
 		Product product = productRepository.findByProductNo(productNo)
 			.orElseThrow(() -> NotFoundException.product(productNo));
-		Order pendingOrder = Order.createPending(memberNo, productNo, count, product.getPrice());
+		Order pendingOrder = Order.createPending(memberNo, productNo, warehouseNo, count, product.getPrice());
 		return orderRepository.register(pendingOrder);
 	}
 
@@ -52,21 +53,22 @@ public class OrderService {
 	}
 
 	@Transactional
-	public void cancelOrder(Long orderNo) {
+	public Order cancelOrder(Long orderNo) {
 		Order cancelledOrder = findOrder(orderNo).cancel();
 		orderRepository.updateOrder(cancelledOrder);
+		return cancelledOrder;
 	}
 
 	@Transactional(readOnly = true)
-	public List<Order> findExpiredPendingOrders(LocalDateTime now) {
+	public Orders findExpiredPendingOrders(LocalDateTime now) {
 		LocalDateTime pendingCutoffTime = Order.calculatePendingCutoffTime(now);
-		return orderRepository.findExpiredPendingOrders(pendingCutoffTime);
+		return new Orders(orderRepository.findExpiredPendingOrders(pendingCutoffTime));
 	}
 
 	@Transactional(readOnly = true)
-	public List<Order> findExpiredInProgressOrders(LocalDateTime now) {
+	public Orders findExpiredInProgressOrders(LocalDateTime now) {
 		LocalDateTime inProgressCutoffTime = Order.calculateInProgressCutoffTime(now);
-		return orderRepository.findExpiredInProgressOrders(inProgressCutoffTime);
+		return new Orders(orderRepository.findExpiredInProgressOrders(inProgressCutoffTime));
 	}
 
 	@Transactional
