@@ -17,7 +17,7 @@ public class WarehouseService {
 	}
 
 	@Cacheable(
-		cacheManager = Caches.Manager.REDIS,
+		cacheManager = Caches.Manager.CAFFEINE,
 		value = Caches.Name.PRODUCT_WAREHOUSES,
 		key = "#productNo"
 	)
