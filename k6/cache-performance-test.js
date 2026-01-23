@@ -3,12 +3,13 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Counter } from 'k6/metrics';
 import { SharedArray } from 'k6/data';
+import exec from 'k6/execution';
 
 // 1. 설정 로드
-const config = new SharedArray('config', () => {
-    return JSON.parse(open('./secret.json'));
+const [secret] = new SharedArray('secret', () => {
+    return [JSON.parse(open('./lib/secret.json'))]
 });
-const BASE_URL = config[0].baseUrl;
+const BASE_URL = secret.baseUrl;
 
 // 2. 커스텀 지표
 export const successCount = new Counter('successful_orders');
@@ -37,9 +38,12 @@ export const options = {
 };
 
 export default function () {
-    // 4. Hot Key & Fixed User 전략
-    // 앞서 DB에 넣어둔 1번 유저(강남 거주), 1번 상품(인기 상품) 고정
-    const memberNo = 1;
+    // [핵심] 유니크한 Member ID 생성 전략
+    // execution.scenario.iterationInTest: 시나리오 내에서 실행된 전체 반복 횟수 (0부터 시작)
+    // DB에 1~10,000번 유저를 넣었으므로, +1 해줍니다.
+    // 만약 테스트가 10,000번을 넘어가면 다시 1번부터 돌도록 모듈러 연산 (%) 추가
+    const uniqueId = exec.scenario.iterationInTest;
+    const memberNo = (uniqueId % 10000) + 1;
 
     const payload = JSON.stringify({
         productNo: 1,
