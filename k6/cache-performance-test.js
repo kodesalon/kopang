@@ -68,7 +68,8 @@ export default function () {
     } else {
         failCount.add(1);
         // 에러 로그는 너무 많이 찍히면 성능 저하되므로 간헐적으로만 확인하거나 주석 처리
-        if (failCount.name % 100 === 0) {
+        if (failCount.name % 10 === 0) {
+            console.log(`❌ Fail [User:${memberNo}] Status: ${res.status}`);
             console.log(`❌ Fail: ${res.status} ${res.body}`);
         }
     }
