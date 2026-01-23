@@ -4,12 +4,14 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.kodesalon.kopang.domain.Address;
 
 public class Warehouses implements Iterable<Warehouse> {
 
 	private final List<Warehouse> values;
 
+	@JsonCreator(mode = JsonCreator.Mode.DELEGATING)
 	public Warehouses(List<Warehouse> values) {
 		this.values = values;
 	}
