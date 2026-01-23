@@ -1,0 +1,22 @@
+{
+  "product": [
+    {
+      "no": 1,
+      "name": "첫 번째 상품 이름",
+      "description": "첫 번째 상품 설명",
+      "price": 10000
+    },
+    {
+      "no": 2,
+      "name": "두 번째 상품 이름",
+      "description": "두 번째 상품 설명",
+      "price": 20000
+    },
+    {
+      "no": 3,
+      "name": "세 번째 상품 이름",
+      "description": "세 번째 상품 설명",
+      "price": 30000
+    }
+  ]
+}

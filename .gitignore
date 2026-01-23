@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### k6 secret
+k6/secret.json

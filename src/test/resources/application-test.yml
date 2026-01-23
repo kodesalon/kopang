@@ -1,0 +1,19 @@
+spring.config.activate.on-profile: test
+
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:kopang;MODE=MySQL
+    username: sa
+    hikari:
+      pool-name: kopang-db-pool
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+  h2:
+    console:
+      enabled: true
