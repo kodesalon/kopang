@@ -56,17 +56,11 @@ public class CacheConfig {
 	public CacheManager caffeinCacheManager() {
 		CaffeineCacheManager cacheManager = new CaffeineCacheManager();
 
-		cacheManager.registerCustomCache("product_warehouses",
+		cacheManager.registerCustomCache(Caches.Name.PRODUCT_WAREHOUSES,
 			Caffeine.newBuilder()
-				// [분석 결과 반영]
-				// 초기 사이즈: 이벤트 시작과 동시에 트래픽이 몰리므로 리사이징 비용을 줄이기 위해 적당히 확보
 				.initialCapacity(100)
-				// 최대 사이즈: 프로모션 상품 수(예: 200개)보다 훨씬 넉넉하게 잡음.
-				// 메모리 이슈는 없으므로, 'Cache Miss'를 0에 수렴하게 만드는 것이 목표.
 				.maximumSize(1000)
-				// TTL: 데이터 변경이 거의 없지만, 혹시 모를 운영 이슈 대비 10분 설정
 				.expireAfterWrite(10, TimeUnit.MINUTES)
-				// 모니터링: 실제 Hit Rate를 보고 튜닝하기 위해 필수
 				.recordStats()
 				.build()
 		);
