@@ -2,12 +2,18 @@ package com.kodesalon.kopang.domain;
 
 import java.awt.geom.Point2D;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Coordinate {
 
 	private final Double latitude;
 	private final Double longitude;
 
-	public Coordinate(Double latitude, Double longitude) {
+	@JsonCreator
+	public Coordinate(
+		@JsonProperty("latitude") Double latitude,
+		@JsonProperty("longitude") Double longitude) {
 		this.latitude = latitude;
 		this.longitude = longitude;
 	}

@@ -1,5 +1,8 @@
 package com.kodesalon.kopang.domain;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Address {
 
 	private final String zipCode;
@@ -7,7 +10,13 @@ public class Address {
 	private final String detail;
 	private final Coordinate coordinate;
 
-	public Address(String zipCode, String defaultAddress, String detail, Coordinate coordinate) {
+	@JsonCreator
+	public Address(
+		@JsonProperty("zipCode") String zipCode,
+		@JsonProperty("defaultAddress") String defaultAddress,
+		@JsonProperty("detail") String detail,
+		@JsonProperty("coordinate") Coordinate coordinate
+	) {
 		this.zipCode = zipCode;
 		this.defaultAddress = defaultAddress;
 		this.detail = detail;
