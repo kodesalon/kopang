@@ -31,6 +31,9 @@ dependencies {
     //redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    // cache
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+
     // api
     implementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation 'io.rest-assured:spring-mock-mvc'
