@@ -17,9 +17,11 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 @EnableCaching
@@ -34,6 +36,8 @@ public class CacheConfig {
 			.allowIfSubType(Object.class)
 			.build();
 		objectMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
+		objectMapper.registerModule(new ParameterNamesModule());
+		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
 		RedisCacheConfiguration warehouseConfig = RedisCacheConfiguration.defaultCacheConfig()
 			.disableCachingNullValues()
