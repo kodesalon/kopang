@@ -30,8 +30,4 @@ public class Warehouses implements Iterable<Warehouse> {
 	public Iterator<Warehouse> iterator() {
 		return values.iterator();
 	}
-
-	public List<Warehouse> getValues() {
-		return values;
-	}
 }

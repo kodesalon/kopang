@@ -1,7 +1,5 @@
 package com.kodesalon.kopang.domain.warehouse;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.kodesalon.kopang.domain.Address;
 
 public class Warehouse {
@@ -11,13 +9,7 @@ public class Warehouse {
 	private final WarehouseRegion region;
 	private final Address address;
 
-	@JsonCreator
-	public Warehouse(
-		@JsonProperty("no") Long no,
-		@JsonProperty("name") String name,
-		@JsonProperty("region") WarehouseRegion region,
-		@JsonProperty("address") Address address
-	) {
+	public Warehouse(Long no, String name, WarehouseRegion region, Address address) {
 		this.no = no;
 		this.name = name;
 		this.region = region;
@@ -30,14 +22,6 @@ public class Warehouse {
 
 	public String getName() {
 		return name;
-	}
-
-	public WarehouseRegion getRegion() {
-		return region;
-	}
-
-	public String getRegionName() {
-		return region.name();
 	}
 
 	public Address getAddress() {
