@@ -40,7 +40,9 @@ spring.config.activate.on-profile: dev
 server:
   tomcat:
     threads:
-      max: 60
+      max: 50
+    mbeanregistry:
+      enabled: true
 
 spring:
   datasource:
@@ -50,7 +52,7 @@ spring:
       username: ${STORAGE_DATABASE_DB_USERNAME}
       password: ${STORAGE_DATABASE_DB_PASSWORD}
       pool-name: kopang-db-pool
-      maximum-pool-size: 40
+      maximum-pool-size: 50
   data:
     redis:
       host: ${REDIS_HOST}
@@ -61,3 +63,6 @@ management:
     web:
       exposure:
         include: "*"
+  metrics:
+    enable:
+      tomcat: true
