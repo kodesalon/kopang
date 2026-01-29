@@ -64,6 +64,14 @@ public class CacheConfig {
 				.recordStats()
 				.build()
 		);
+		cacheManager.registerCustomCache(Caches.Name.PRODUCT,
+			Caffeine.newBuilder()
+				.initialCapacity(50)
+				.maximumSize(100)
+				.expireAfterWrite(10, TimeUnit.MINUTES)
+				.recordStats()
+				.build()
+		);
 		return cacheManager;
 	}
 }
