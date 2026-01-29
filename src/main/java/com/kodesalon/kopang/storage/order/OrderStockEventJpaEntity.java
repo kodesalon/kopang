@@ -67,7 +67,6 @@ public class OrderStockEventJpaEntity {
 		this.published = Boolean.FALSE;
 	}
 
-	// 빌더 시작 정적 메서드
 	public static Builder builder() {
 		return new Builder();
 	}
