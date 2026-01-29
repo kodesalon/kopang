@@ -22,6 +22,7 @@ import com.kodesalon.kopang.domain.order.Money;
 import com.kodesalon.kopang.domain.order.Order;
 import com.kodesalon.kopang.domain.order.OrderRepository;
 import com.kodesalon.kopang.domain.order.OrderStatus;
+import com.kodesalon.kopang.domain.order.event.OrderStockEventPublisher;
 import com.kodesalon.kopang.domain.product.Product;
 import com.kodesalon.kopang.domain.product.ProductRepository;
 import com.kodesalon.kopang.service.exception.NotFoundException;
@@ -31,6 +32,7 @@ class OrderServiceTest {
 
 	private @Mock ProductRepository productRepository;
 	private @Mock OrderRepository orderRepository;
+	private @Mock OrderStockEventPublisher orderStockEventPublisher;
 	private @InjectMocks OrderService orderService;
 
 	@DisplayName("상품이 존재하면 주문 생성에 성공하고 저장소에 등록한다")
