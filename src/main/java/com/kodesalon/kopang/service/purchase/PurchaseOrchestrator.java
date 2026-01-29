@@ -12,7 +12,7 @@ import com.kodesalon.kopang.domain.stock.StockQuantity;
 import com.kodesalon.kopang.domain.warehouse.Warehouse;
 import com.kodesalon.kopang.domain.warehouse.Warehouses;
 import com.kodesalon.kopang.service.exception.SoldOutException;
-import com.kodesalon.kopang.service.member.MemberAddressService;
+import com.kodesalon.kopang.service.member.MemberAddressCacheService;
 import com.kodesalon.kopang.service.order.OrderService;
 import com.kodesalon.kopang.service.product.ProductCacheService;
 import com.kodesalon.kopang.service.stock.StockReservationService;
@@ -21,20 +21,20 @@ import com.kodesalon.kopang.service.warehouse.WarehouseService;
 @Component
 public class PurchaseOrchestrator {
 
-	private final MemberAddressService memberAddressService;
+	private final MemberAddressCacheService memberAddressCacheService;
 	private final WarehouseService warehouseService;
 	private final StockReservationService stockReservationService;
 	private final ProductCacheService productCacheService;
 	private final OrderService orderService;
 
 	public PurchaseOrchestrator(
-		MemberAddressService memberAddressService,
+		MemberAddressCacheService memberAddressCacheService,
 		WarehouseService warehouseService,
 		StockReservationService stockReservationService,
 		ProductCacheService productCacheService,
 		OrderService orderService
 	) {
-		this.memberAddressService = memberAddressService;
+		this.memberAddressCacheService = memberAddressCacheService;
 		this.warehouseService = warehouseService;
 		this.stockReservationService = stockReservationService;
 		this.productCacheService = productCacheService;
@@ -42,7 +42,7 @@ public class PurchaseOrchestrator {
 	}
 
 	public ReservationOrderResult reserve(Long memberNo, Long productNo, Integer count) {
-		Address memberAddress = memberAddressService.findDefaultMemberAddress(memberNo).getAddress();
+		Address memberAddress = memberAddressCacheService.getDefaultMemberAddress(memberNo);
 		Warehouses warehouses = warehouseService
 			.findWarehousesForProduct(productNo)
 			.sortedByDistance(memberAddress);
