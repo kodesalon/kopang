@@ -8,7 +8,7 @@ import com.kodesalon.kopang.domain.order.Order;
 import com.kodesalon.kopang.domain.order.OrderProduct;
 import com.kodesalon.kopang.domain.payment.PaymentClient;
 import com.kodesalon.kopang.domain.payment.PaymentResult;
-import com.kodesalon.kopang.service.purchase.PurchaseFacade;
+import com.kodesalon.kopang.service.purchase.PurchaseOrchestrator;
 
 @Component
 public class PaymentRecoveryOrchestrator {
@@ -16,16 +16,16 @@ public class PaymentRecoveryOrchestrator {
 	private static final Logger log = LoggerFactory.getLogger(PaymentRecoveryOrchestrator.class);
 
 	private final PaymentService paymentService;
-	private final PurchaseFacade purchaseFacade;
+	private final PurchaseOrchestrator purchaseOrchestrator;
 	private final PaymentClient paymentClient;
 
 	public PaymentRecoveryOrchestrator(
 		PaymentService paymentService,
-		PurchaseFacade purchaseFacade,
+		PurchaseOrchestrator purchaseOrchestrator,
 		PaymentClient paymentClient
 	) {
 		this.paymentService = paymentService;
-		this.purchaseFacade = purchaseFacade;
+		this.purchaseOrchestrator = purchaseOrchestrator;
 		this.paymentClient = paymentClient;
 	}
 
@@ -39,7 +39,7 @@ public class PaymentRecoveryOrchestrator {
 				case ABORTED, EXPIRED -> {
 					OrderProduct eventProduct = order.getEventProduct();
 					paymentService.registerFailedPayment(orderNo, paymentResult);
-					purchaseFacade.cancel(orderNo, eventProduct.getProductNo(), eventProduct.getCount());
+					purchaseOrchestrator.cancel(orderNo, eventProduct.getProductNo(), eventProduct.getCount());
 				}
 				default -> log.error("Order [{}]: Unknown Status ({}) from PG", orderNo, paymentResult.status());
 			}

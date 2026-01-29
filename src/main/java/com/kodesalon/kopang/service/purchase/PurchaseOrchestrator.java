@@ -17,14 +17,14 @@ import com.kodesalon.kopang.service.stock.StockReservationService;
 import com.kodesalon.kopang.service.warehouse.WarehouseService;
 
 @Component
-public class PurchaseFacade {
+public class PurchaseOrchestrator {
 
 	private final MemberAddressService memberAddressService;
 	private final WarehouseService warehouseService;
 	private final StockReservationService stockReservationService;
 	private final OrderService orderService;
 
-	public PurchaseFacade(
+	public PurchaseOrchestrator(
 		MemberAddressService memberAddressService,
 		WarehouseService warehouseService,
 		StockReservationService stockReservationService,

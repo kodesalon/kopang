@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kodesalon.kopang.domain.order.Money;
 import com.kodesalon.kopang.domain.order.Order;
 import com.kodesalon.kopang.domain.order.OrderRepository;
+import com.kodesalon.kopang.domain.order.event.OrderStockEvent;
+import com.kodesalon.kopang.domain.order.event.OrderStockEventPublisher;
 import com.kodesalon.kopang.domain.order.Orders;
 import com.kodesalon.kopang.domain.product.Product;
 import com.kodesalon.kopang.domain.product.ProductRepository;
@@ -20,18 +22,25 @@ public class OrderService {
 
 	private final ProductRepository productRepository;
 	private final OrderRepository orderRepository;
+	private final OrderStockEventPublisher eventPublisher;
 
-	public OrderService(ProductRepository productRepository, OrderRepository orderRepository) {
+	public OrderService(
+		ProductRepository productRepository,
+		OrderRepository orderRepository,
+		OrderStockEventPublisher eventPublisher
+	) {
 		this.productRepository = productRepository;
 		this.orderRepository = orderRepository;
+		this.eventPublisher = eventPublisher;
 	}
 
 	@Transactional
 	public Order createOrderPending(Long memberNo, Long productNo, Long warehouseNo, Integer count) {
 		Product product = productRepository.findByProductNo(productNo)
 			.orElseThrow(() -> NotFoundException.product(productNo));
-		Order pendingOrder = Order.createPending(memberNo, productNo, warehouseNo, count, product.getPrice());
-		return orderRepository.register(pendingOrder);
+		Order order = orderRepository.register(Order.createPending(memberNo, productNo, warehouseNo, count, product.getPrice()));
+		eventPublisher.createOrderPending(OrderStockEvent.create(order.getNo(), productNo, warehouseNo, count));
+		return order;
 	}
 
 	@Transactional
