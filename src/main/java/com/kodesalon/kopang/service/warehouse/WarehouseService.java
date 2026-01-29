@@ -16,11 +16,11 @@ public class WarehouseService {
 		this.warehouseRepository = warehouseRepository;
 	}
 
-	@Cacheable(
-		cacheManager = Caches.Manager.CAFFEINE,
-		value = Caches.Name.PRODUCT_WAREHOUSES,
-		key = "#productNo"
-	)
+	// @Cacheable(
+	// 	cacheManager = Caches.Manager.CAFFEINE,
+	// 	value = Caches.Name.PRODUCT_WAREHOUSES,
+	// 	key = "#productNo"
+	// )
 	public Warehouses findWarehousesForProduct(Long productNo) {
 		return new Warehouses(warehouseRepository.findAllByProductNo(productNo));
 	}
