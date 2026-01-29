@@ -18,9 +18,11 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.impl.StdTypeResolverBuilder;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -28,6 +30,9 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 @Configuration
 public class CacheConfig {
 
+	/**
+	 * Redis Cache Config
+	 */
 	@Primary
 	@Bean(name = Caches.Manager.REDIS)
 	public CacheManager redisCacheManager(RedisConnectionFactory redisConnectionFactory) {
@@ -35,7 +40,11 @@ public class CacheConfig {
 		PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
 			.allowIfSubType(Object.class)
 			.build();
-		objectMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
+		RecordSupportingTypeResolver typeResolver = new RecordSupportingTypeResolver(ObjectMapper.DefaultTyping.NON_FINAL, ptv);
+		StdTypeResolverBuilder initializedResolver = typeResolver.init(JsonTypeInfo.Id.CLASS, null);
+		initializedResolver = initializedResolver.inclusion(JsonTypeInfo.As.PROPERTY);
+		objectMapper.setDefaultTyping(initializedResolver);
+
 		objectMapper.registerModule(new ParameterNamesModule());
 		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -52,6 +61,27 @@ public class CacheConfig {
 			.build();
 	}
 
+	public static class RecordSupportingTypeResolver extends ObjectMapper.DefaultTypeResolverBuilder {
+
+		public RecordSupportingTypeResolver(ObjectMapper.DefaultTyping t, PolymorphicTypeValidator ptv) {
+			super(t, ptv);
+		}
+
+		@Override
+		public boolean useForType(JavaType t) {
+			boolean isRecord = t.getRawClass().isRecord();
+			boolean superResult = super.useForType(t);
+
+			if (isRecord) {
+				return true;
+			}
+			return superResult;
+		}
+	}
+
+	/**
+	 *  Caffeine Cache Config
+	 */
 	@Bean(name = Caches.Manager.CAFFEINE)
 	public CacheManager caffeinCacheManager() {
 		CaffeineCacheManager cacheManager = new CaffeineCacheManager();
