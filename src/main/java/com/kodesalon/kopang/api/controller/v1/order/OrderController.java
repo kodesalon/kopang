@@ -8,17 +8,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.kodesalon.kopang.service.purchase.PurchaseFacade;
+import com.kodesalon.kopang.service.purchase.PurchaseOrchestrator;
 import com.kodesalon.kopang.service.purchase.ReservationOrderResult;
 
 @RestController
 @RequestMapping("/api/v1/orders")
 public class OrderController {
 
-	private final PurchaseFacade purchaseFacade;
+	private final PurchaseOrchestrator purchaseOrchestrator;
 
-	public OrderController(PurchaseFacade purchaseFacade) {
-		this.purchaseFacade = purchaseFacade;
+	public OrderController(PurchaseOrchestrator purchaseOrchestrator) {
+		this.purchaseOrchestrator = purchaseOrchestrator;
 	}
 
 	@PostMapping
@@ -26,7 +26,7 @@ public class OrderController {
 		@RequestParam Long memberNo,
 		@RequestBody CreateReservationOrderRequest request
 	) {
-		ReservationOrderResult result = purchaseFacade.reserve(memberNo, request.productNo(), request.count());
+		ReservationOrderResult result = purchaseOrchestrator.reserve(memberNo, request.productNo(), request.count());
 		return ResponseEntity.status(HttpStatus.CREATED)
 			.body(ReservationOrderResponse.of(result.order(), result.quantity()));
 	}
