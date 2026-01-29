@@ -16,26 +16,26 @@ import com.kodesalon.kopang.service.member.MemberAddressCacheService;
 import com.kodesalon.kopang.service.order.OrderService;
 import com.kodesalon.kopang.service.product.ProductCacheService;
 import com.kodesalon.kopang.service.stock.StockReservationService;
-import com.kodesalon.kopang.service.warehouse.WarehouseService;
+import com.kodesalon.kopang.service.warehouse.WarehouseCacheService;
 
 @Component
 public class PurchaseOrchestrator {
 
 	private final MemberAddressCacheService memberAddressCacheService;
-	private final WarehouseService warehouseService;
+	private final WarehouseCacheService warehouseCacheService;
 	private final StockReservationService stockReservationService;
 	private final ProductCacheService productCacheService;
 	private final OrderService orderService;
 
 	public PurchaseOrchestrator(
 		MemberAddressCacheService memberAddressCacheService,
-		WarehouseService warehouseService,
+		WarehouseCacheService warehouseCacheService,
 		StockReservationService stockReservationService,
 		ProductCacheService productCacheService,
 		OrderService orderService
 	) {
 		this.memberAddressCacheService = memberAddressCacheService;
-		this.warehouseService = warehouseService;
+		this.warehouseCacheService = warehouseCacheService;
 		this.stockReservationService = stockReservationService;
 		this.productCacheService = productCacheService;
 		this.orderService = orderService;
@@ -43,8 +43,8 @@ public class PurchaseOrchestrator {
 
 	public ReservationOrderResult reserve(Long memberNo, Long productNo, Integer count) {
 		Address memberAddress = memberAddressCacheService.getDefaultMemberAddress(memberNo);
-		Warehouses warehouses = warehouseService
-			.findWarehousesForProduct(productNo)
+		Warehouses warehouses = warehouseCacheService
+			.getWarehousesForProduct(productNo)
 			.sortedByDistance(memberAddress);
 
 		Warehouse allocatedWarehouse = null;
