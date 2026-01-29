@@ -48,7 +48,6 @@ public class OrderStockEventJpaEntity {
 	private Boolean published;
 
 	@CreatedDate
-	@Column(nullable = false)
 	private LocalDateTime createdAt;
 
 	private LocalDateTime publishedAt;
