@@ -8,5 +8,6 @@ public interface Caches {
 
 	interface Name {
 		String PRODUCT_WAREHOUSES = "product_warehouses";
+		String PRODUCT = "product";
 	}
 }

@@ -7,12 +7,14 @@ import org.springframework.stereotype.Component;
 import com.kodesalon.kopang.domain.Address;
 import com.kodesalon.kopang.domain.order.Order;
 import com.kodesalon.kopang.domain.order.Orders;
+import com.kodesalon.kopang.domain.product.Product;
 import com.kodesalon.kopang.domain.stock.StockQuantity;
 import com.kodesalon.kopang.domain.warehouse.Warehouse;
 import com.kodesalon.kopang.domain.warehouse.Warehouses;
 import com.kodesalon.kopang.service.exception.SoldOutException;
 import com.kodesalon.kopang.service.member.MemberAddressService;
 import com.kodesalon.kopang.service.order.OrderService;
+import com.kodesalon.kopang.service.product.ProductCacheService;
 import com.kodesalon.kopang.service.stock.StockReservationService;
 import com.kodesalon.kopang.service.warehouse.WarehouseService;
 
@@ -22,17 +24,20 @@ public class PurchaseOrchestrator {
 	private final MemberAddressService memberAddressService;
 	private final WarehouseService warehouseService;
 	private final StockReservationService stockReservationService;
+	private final ProductCacheService productCacheService;
 	private final OrderService orderService;
 
 	public PurchaseOrchestrator(
 		MemberAddressService memberAddressService,
 		WarehouseService warehouseService,
 		StockReservationService stockReservationService,
+		ProductCacheService productCacheService,
 		OrderService orderService
 	) {
 		this.memberAddressService = memberAddressService;
 		this.warehouseService = warehouseService;
 		this.stockReservationService = stockReservationService;
+		this.productCacheService = productCacheService;
 		this.orderService = orderService;
 	}
 
@@ -56,8 +61,9 @@ public class PurchaseOrchestrator {
 			throw SoldOutException.warehouse(productNo);
 		}
 
+		Product product = productCacheService.getProduct(productNo);
 		try {
-			Order order = orderService.createOrderPending(memberNo, productNo, allocatedWarehouse.getNo(), count);
+			Order order = orderService.createOrderPending(memberNo, productNo, allocatedWarehouse.getNo(), count, product.getPrice());
 			return new ReservationOrderResult(finalStock, order);
 		} catch (Exception e) {
 			stockReservationService.increase(allocatedWarehouse.getNo(), productNo, count);

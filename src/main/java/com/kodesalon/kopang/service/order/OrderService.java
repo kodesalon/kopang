@@ -13,32 +13,22 @@ import com.kodesalon.kopang.domain.order.OrderRepository;
 import com.kodesalon.kopang.domain.order.event.OrderStockEvent;
 import com.kodesalon.kopang.domain.order.event.OrderStockEventPublisher;
 import com.kodesalon.kopang.domain.order.Orders;
-import com.kodesalon.kopang.domain.product.Product;
-import com.kodesalon.kopang.domain.product.ProductRepository;
 import com.kodesalon.kopang.service.exception.NotFoundException;
 
 @Service
 public class OrderService {
 
-	private final ProductRepository productRepository;
 	private final OrderRepository orderRepository;
 	private final OrderStockEventPublisher eventPublisher;
 
-	public OrderService(
-		ProductRepository productRepository,
-		OrderRepository orderRepository,
-		OrderStockEventPublisher eventPublisher
-	) {
-		this.productRepository = productRepository;
+	public OrderService(OrderRepository orderRepository, OrderStockEventPublisher eventPublisher) {
 		this.orderRepository = orderRepository;
 		this.eventPublisher = eventPublisher;
 	}
 
 	@Transactional
-	public Order createOrderPending(Long memberNo, Long productNo, Long warehouseNo, Integer count) {
-		Product product = productRepository.findByProductNo(productNo)
-			.orElseThrow(() -> NotFoundException.product(productNo));
-		Order order = orderRepository.register(Order.createPending(memberNo, productNo, warehouseNo, count, product.getPrice()));
+	public Order createOrderPending(Long memberNo, Long productNo, Long warehouseNo, Integer count, BigDecimal productPrice) {
+		Order order = orderRepository.register(Order.createPending(memberNo, productNo, warehouseNo, count, productPrice));
 		eventPublisher.createOrderPending(OrderStockEvent.create(order.getNo(), productNo, warehouseNo, count));
 		return order;
 	}
