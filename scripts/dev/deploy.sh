@@ -40,7 +40,13 @@ source $BASE_PATH/.profile
 
 SPRING_PROFILES_ACTIVE="dev"
 
+JIT_LOG_NAME="$LOG_PATH/jit_compile_$(date +%Y%m%d_%H%M%S).log"
+
 nohup java -jar \
+  -XX:+UnlockDiagnosticVMOptions \
+  -XX:+PrintCompilation \
+  -XX:+LogCompilation \
+  -XX:LogFile=$JIT_LOG_NAME \
   -Dspring.profiles.active=$SPRING_PROFILES_ACTIVE \
   -DSTORAGE_DATABASE_DB_URL="$STORAGE_DATABASE_DB_URL" \
   -DSTORAGE_DATABASE_DB_NAME="$STORAGE_DATABASE_DB_NAME" \
