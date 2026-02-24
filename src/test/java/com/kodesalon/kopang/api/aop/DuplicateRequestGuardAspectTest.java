@@ -4,13 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.BDDMockito.never;
 import static org.mockito.BDDMockito.verify;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -26,7 +27,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.ValueOperations;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.kodesalon.kopang.config.Caches;
@@ -41,6 +42,9 @@ class DuplicateRequestGuardAspectTest {
 
 	@Mock
 	private RedisTemplate<String, String> redisTemplate;
+
+	@Mock
+	private ValueOperations<String, String> valueOperations;
 
 	@Mock
 	private ProceedingJoinPoint joinPoint;
@@ -65,6 +69,8 @@ class DuplicateRequestGuardAspectTest {
 
 	@BeforeEach
 	void setUp() {
+		given(caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD)).willReturn(caffeineCache);
+		lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
 		aspect = new DuplicateRequestGuardAspect(caffeineCacheManager, redisTemplate);
 	}
 
@@ -106,7 +112,6 @@ class DuplicateRequestGuardAspectTest {
 			PreventDuplicateRequest annotation = buildAnnotation("'order:' + #memberNo + ':' + #productNo", 3);
 			stubJoinPointWithArgs(new Object(), "sampleMethod", new Object[]{1L, 100L});
 
-			given(caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD)).willReturn(caffeineCache);
 			// Caffeine 캐시에 이미 값이 존재하는 상황 (ValueWrapper 반환)
 			given(caffeineCache.putIfAbsent(anyString(), any())).willReturn(valueWrapper);
 
@@ -116,22 +121,21 @@ class DuplicateRequestGuardAspectTest {
 				.hasMessage("이미 처리 중인 요청입니다");
 		}
 
-		@DisplayName("Caffeine 중복 감지 시 Redis 스크립트는 실행되지 않는다")
+		@DisplayName("Caffeine 중복 감지 시 Redis setIfAbsent 는 실행되지 않는다")
 		@Test
-		void guard_doesNotExecuteRedisScript_whenCaffeineDetectsDuplicate() throws NoSuchMethodException {
+		void guard_doesNotExecuteRedisSetIfAbsent_whenCaffeineDetectsDuplicate() throws NoSuchMethodException {
 			// given
 			PreventDuplicateRequest annotation = buildAnnotation("'order:' + #memberNo + ':' + #productNo", 3);
 			stubJoinPointWithArgs(new Object(), "sampleMethod", new Object[]{1L, 100L});
 
-			given(caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD)).willReturn(caffeineCache);
 			given(caffeineCache.putIfAbsent(anyString(), any())).willReturn(valueWrapper);
 
 			// when
 			assertThatThrownBy(() -> aspect.guard(joinPoint, annotation))
 				.isInstanceOf(DuplicateRequestException.class);
 
-			// then: Redis 스크립트 미실행 검증
-			verify(redisTemplate, never()).execute(any(DefaultRedisScript.class), anyList(), anyString());
+			// then: Redis setIfAbsent 미실행 검증
+			verify(valueOperations, never()).setIfAbsent(anyString(), anyString(), any(Duration.class));
 		}
 	}
 
@@ -139,18 +143,17 @@ class DuplicateRequestGuardAspectTest {
 	@DisplayName("Redis 중복 감지 테스트")
 	class RedisDuplicateDetectionTest {
 
-		@DisplayName("Caffeine 통과 후 Redis 가 0 을 반환하면 DuplicateRequestException 이 발생한다")
+		@DisplayName("Caffeine 통과 후 Redis 가 false 를 반환하면 DuplicateRequestException 이 발생한다")
 		@Test
-		void guard_throwsDuplicateRequestException_whenRedisReturnsZero() throws NoSuchMethodException {
+		void guard_throwsDuplicateRequestException_whenRedisReturnsFalse() throws NoSuchMethodException {
 			// given
 			PreventDuplicateRequest annotation = buildAnnotation("'order:' + #memberNo + ':' + #productNo", 3);
 			stubJoinPointWithArgs(new Object(), "sampleMethod", new Object[]{1L, 100L});
 
-			given(caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD)).willReturn(caffeineCache);
 			// Caffeine miss (null 반환 = 최초 삽입 성공)
 			given(caffeineCache.putIfAbsent(anyString(), any())).willReturn(null);
-			// Redis: 이미 키 존재(중복) → 0 반환
-			given(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString())).willReturn(0L);
+			// Redis: 이미 키 존재(중복) → false 반환
+			given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(false);
 
 			// when & then
 			assertThatThrownBy(() -> aspect.guard(joinPoint, annotation))
@@ -165,10 +168,9 @@ class DuplicateRequestGuardAspectTest {
 			PreventDuplicateRequest annotation = buildAnnotation("'order:' + #memberNo + ':' + #productNo", 3);
 			stubJoinPointWithArgs(new Object(), "sampleMethod", new Object[]{1L, 100L});
 
-			given(caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD)).willReturn(caffeineCache);
 			given(caffeineCache.putIfAbsent(anyString(), any())).willReturn(null);
-			// Redis: null 반환 (네트워크 오류나 스크립트 실패 상황)
-			given(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString())).willReturn(null);
+			// Redis: null 반환 (네트워크 오류나 연결 실패 상황)
+			given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(null);
 
 			// when & then
 			assertThatThrownBy(() -> aspect.guard(joinPoint, annotation))
@@ -183,9 +185,8 @@ class DuplicateRequestGuardAspectTest {
 			PreventDuplicateRequest annotation = buildAnnotation("'order:' + #memberNo + ':' + #productNo", 3);
 			stubJoinPointWithArgs(new Object(), "sampleMethod", new Object[]{1L, 100L});
 
-			given(caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD)).willReturn(caffeineCache);
 			given(caffeineCache.putIfAbsent(anyString(), any())).willReturn(null);
-			given(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString())).willReturn(0L);
+			given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(false);
 
 			// when
 			assertThatThrownBy(() -> aspect.guard(joinPoint, annotation))
@@ -200,7 +201,7 @@ class DuplicateRequestGuardAspectTest {
 	@DisplayName("최초 요청 성공 테스트")
 	class FirstRequestSuccessTest {
 
-		@DisplayName("Caffeine miss 후 Redis 가 1 을 반환하면 proceed() 가 호출되고 결과가 반환된다")
+		@DisplayName("Caffeine miss 후 Redis 가 true 를 반환하면 proceed() 가 호출되고 결과가 반환된다")
 		@Test
 		void guard_proceeds_whenBothCachesMiss() throws Throwable {
 			// given
@@ -208,9 +209,8 @@ class DuplicateRequestGuardAspectTest {
 			stubJoinPointWithArgs(new Object(), "sampleMethod", new Object[]{1L, 100L});
 
 			Object expectedResult = new Object();
-			given(caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD)).willReturn(caffeineCache);
 			given(caffeineCache.putIfAbsent(anyString(), any())).willReturn(null);
-			given(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString())).willReturn(1L);
+			given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(true);
 			given(joinPoint.proceed()).willReturn(expectedResult);
 
 			// when
@@ -223,9 +223,9 @@ class DuplicateRequestGuardAspectTest {
 			);
 		}
 
-		@DisplayName("최초 요청 성공 시 TTL 값이 Redis 스크립트에 정확히 전달된다")
+		@DisplayName("최초 요청 성공 시 TTL 값이 Redis setIfAbsent 에 정확히 전달된다")
 		@Test
-		void guard_passesTtlToRedisScript() throws Throwable {
+		void guard_passesTtlToRedisSetIfAbsent() throws Throwable {
 			// given
 			int expectedTtl = 5;
 			PreventDuplicateRequest annotation = buildAnnotation("'key'", expectedTtl);
@@ -235,23 +235,18 @@ class DuplicateRequestGuardAspectTest {
 			given(joinPoint.getArgs()).willReturn(new Object[]{1L, 100L});
 			given(joinPoint.getTarget()).willReturn(new Object());
 
-			given(caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD)).willReturn(caffeineCache);
 			given(caffeineCache.putIfAbsent(anyString(), any())).willReturn(null);
-			given(redisTemplate.execute(
-				any(DefaultRedisScript.class),
-				anyList(),
-				anyString()
-			)).willReturn(1L);
+			given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(true);
 			given(joinPoint.proceed()).willReturn(null);
 
 			// when
 			aspect.guard(joinPoint, annotation);
 
-			// then: TTL 값이 "5" 문자열로 전달되는지 검증
-			verify(redisTemplate).execute(
-				any(DefaultRedisScript.class),
-				anyList(),
-				org.mockito.ArgumentMatchers.eq(String.valueOf(expectedTtl))
+			// then: TTL 값이 Duration.ofSeconds(5) 로 전달되는지 검증
+			verify(valueOperations).setIfAbsent(
+				anyString(),
+				anyString(),
+				org.mockito.ArgumentMatchers.eq(Duration.ofSeconds(expectedTtl))
 			);
 		}
 	}
@@ -268,9 +263,8 @@ class DuplicateRequestGuardAspectTest {
 			stubJoinPointWithArgs(new Object(), "sampleMethod", new Object[]{1L, 100L});
 			String expectedFullKey = "duplicate:order:1:100";
 
-			given(caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD)).willReturn(caffeineCache);
 			given(caffeineCache.putIfAbsent(anyString(), any())).willReturn(null);
-			given(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString())).willReturn(1L);
+			given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(true);
 			// 인프라 오류: 패키지가 kopang 이 아닌 일반 RuntimeException
 			given(joinPoint.proceed()).willThrow(new RuntimeException("DB connection failed"));
 
@@ -293,9 +287,8 @@ class DuplicateRequestGuardAspectTest {
 			PreventDuplicateRequest annotation = buildAnnotation("'order:' + #memberNo + ':' + #productNo", 3);
 			stubJoinPointWithArgs(new Object(), "sampleMethod", new Object[]{1L, 100L});
 
-			given(caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD)).willReturn(caffeineCache);
 			given(caffeineCache.putIfAbsent(anyString(), any())).willReturn(null);
-			given(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString())).willReturn(1L);
+			given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(true);
 			// 비즈니스 예외: com.kodesalon.kopang 패키지 소속
 			given(joinPoint.proceed()).willThrow(SoldOutException.warehouse(100L));
 
@@ -317,9 +310,8 @@ class DuplicateRequestGuardAspectTest {
 			PreventDuplicateRequest annotation = buildAnnotation("'order:' + #memberNo + ':' + #productNo", 3);
 			stubJoinPointWithArgs(new Object(), "sampleMethod", new Object[]{1L, 100L});
 
-			given(caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD)).willReturn(caffeineCache);
 			given(caffeineCache.putIfAbsent(anyString(), any())).willReturn(null);
-			given(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString())).willReturn(1L);
+			given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(true);
 			// 표준 검증 예외: IllegalArgumentException 은 비즈니스 예외로 취급
 			given(joinPoint.proceed()).willThrow(new IllegalArgumentException("잘못된 파라미터"));
 
@@ -342,9 +334,8 @@ class DuplicateRequestGuardAspectTest {
 			PreventDuplicateRequest annotation = buildAnnotation("'order:' + #memberNo + ':' + #productNo", 3);
 			stubJoinPointWithArgs(new Object(), "sampleMethod", new Object[]{1L, 100L});
 
-			given(caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD)).willReturn(caffeineCache);
 			given(caffeineCache.putIfAbsent(anyString(), any())).willReturn(null);
-			given(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString())).willReturn(1L);
+			given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(true);
 			// 표준 상태 예외: IllegalStateException 은 비즈니스 예외로 취급
 			given(joinPoint.proceed()).willThrow(new IllegalStateException("잘못된 상태"));
 
@@ -376,9 +367,8 @@ class DuplicateRequestGuardAspectTest {
 			PreventDuplicateRequest annotation = buildAnnotation("'order:' + #memberNo + ':' + #productNo", 3);
 			stubJoinPointWithArgs(new Object(), "sampleMethod", new Object[]{memberNo, productNo});
 
-			given(caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD)).willReturn(caffeineCache);
 			given(caffeineCache.putIfAbsent(anyString(), any())).willReturn(null);
-			given(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString())).willReturn(1L);
+			given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(true);
 			given(joinPoint.proceed()).willReturn(null);
 
 			// when
@@ -399,9 +389,8 @@ class DuplicateRequestGuardAspectTest {
 			PreventDuplicateRequest annotation = buildAnnotation("'static-key'", 3);
 			stubJoinPointWithArgs(new Object(), "sampleMethod", new Object[]{1L, 1L});
 
-			given(caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD)).willReturn(caffeineCache);
 			given(caffeineCache.putIfAbsent(anyString(), any())).willReturn(null);
-			given(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString())).willReturn(1L);
+			given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(true);
 			given(joinPoint.proceed()).willReturn(null);
 
 			// when
@@ -436,7 +425,7 @@ class DuplicateRequestGuardAspectTest {
 
 			PreventDuplicateRequest annotation = buildAnnotation("'order:' + #memberNo + ':' + #productNo", 3);
 			stubJoinPointWithArgs(new Object(), "sampleMethod", new Object[]{1L, 100L});
-			given(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString())).willReturn(1L);
+			given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(true);
 			given(joinPoint.proceed()).willReturn("success");
 
 			// when: 첫 번째 요청 성공
@@ -445,8 +434,8 @@ class DuplicateRequestGuardAspectTest {
 			// TTL 1초 만료 대기
 			Thread.sleep(1500);
 
-			// 두 번째 요청: TTL 만료로 Caffeine miss → Redis 도 1 반환 → 통과
-			given(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString())).willReturn(1L);
+			// 두 번째 요청: TTL 만료로 Caffeine miss → Redis 도 true 반환 → 통과
+			given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(true);
 			given(joinPoint.proceed()).willReturn("success-after-expiry");
 			Object secondResult = aspectWithRealCache.guard(joinPoint, annotation);
 
@@ -474,7 +463,7 @@ class DuplicateRequestGuardAspectTest {
 
 			PreventDuplicateRequest annotation = buildAnnotation("'order:' + #memberNo + ':' + #productNo", 3);
 			stubJoinPointWithArgs(new Object(), "sampleMethod", new Object[]{1L, 100L});
-			given(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), anyString())).willReturn(1L);
+			given(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).willReturn(true);
 			given(joinPoint.proceed()).willReturn("success");
 
 			// when: 첫 번째 요청 성공

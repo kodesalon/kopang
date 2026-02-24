@@ -1,7 +1,8 @@
 package com.kodesalon.kopang.api.aop;
 
 import java.lang.reflect.Method;
-import java.util.List;
+import java.time.Duration;
+import java.util.Objects;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -12,9 +13,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.expression.MethodBasedEvaluationContext;
 import org.springframework.core.DefaultParameterNameDiscoverer;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -29,9 +28,8 @@ public class DuplicateRequestGuardAspect {
 
 	private static final String KEY_PREFIX = "duplicate:";
 
-	private final CacheManager caffeineCacheManager;
+	private final Cache duplicateRequestGuardCache;
 	private final RedisTemplate<String, String> redisTemplate;
-	private final DefaultRedisScript<Long> duplicateRequestGuardScript;
 	private final ExpressionParser parser = new SpelExpressionParser();
 	private final DefaultParameterNameDiscoverer nameDiscoverer = new DefaultParameterNameDiscoverer();
 
@@ -39,29 +37,25 @@ public class DuplicateRequestGuardAspect {
 		@Qualifier(Caches.Manager.CAFFEINE) CacheManager caffeineCacheManager,
 		RedisTemplate<String, String> redisTemplate
 	) {
-		this.caffeineCacheManager = caffeineCacheManager;
+		this.duplicateRequestGuardCache = Objects.requireNonNull(
+			caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD),
+			"duplicate_request_guard cache가 등록되지 않았습니다."
+		);
 		this.redisTemplate = redisTemplate;
-		this.duplicateRequestGuardScript = new DefaultRedisScript<>();
-		this.duplicateRequestGuardScript.setLocation(new ClassPathResource("redis/duplicate_request_guard.lua"));
-		this.duplicateRequestGuardScript.setResultType(Long.class);
 	}
 
 	@Around("@annotation(preventDuplicateRequest)")
 	public Object guard(ProceedingJoinPoint joinPoint, PreventDuplicateRequest preventDuplicateRequest) throws Throwable {
 		String key = KEY_PREFIX + resolveKey(joinPoint, preventDuplicateRequest.keyExpression());
 
-		Cache cache = caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD);
-		Cache.ValueWrapper existing = cache.putIfAbsent(key, Boolean.TRUE);
+		Cache.ValueWrapper existing = duplicateRequestGuardCache.putIfAbsent(key, Boolean.TRUE);
 		if (existing != null) {
 			throw DuplicateRequestException.detected();
 		}
 
-		Long result = redisTemplate.execute(
-			duplicateRequestGuardScript,
-			List.of(key),
-			String.valueOf(preventDuplicateRequest.ttlSeconds())
-		);
-		if (result == null || result == 0L) {
+		Boolean isNew = redisTemplate.opsForValue()
+			.setIfAbsent(key, "1", Duration.ofSeconds(preventDuplicateRequest.ttlSeconds()));
+		if (!Boolean.TRUE.equals(isNew)) {
 			throw DuplicateRequestException.detected();
 		}
 
@@ -69,7 +63,7 @@ public class DuplicateRequestGuardAspect {
 			return joinPoint.proceed();
 		} catch (Throwable e) {
 			if (isSystemError(e)) {
-				cache.evict(key);
+				duplicateRequestGuardCache.evict(key);
 				redisTemplate.delete(key);
 			}
 			throw e;
