@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kodesalon.kopang.api.aop.PreventDuplicateRequest;
 import com.kodesalon.kopang.service.purchase.PurchaseOrchestrator;
 import com.kodesalon.kopang.service.purchase.ReservationOrderResult;
 
@@ -21,6 +22,7 @@ public class OrderController {
 		this.purchaseOrchestrator = purchaseOrchestrator;
 	}
 
+	@PreventDuplicateRequest(keyExpression = "'order:' + #memberNo + ':' + #request.productNo()", ttlSeconds = 3)
 	@PostMapping
 	public ResponseEntity<ReservationOrderResponse> createReservationOrder(
 		@RequestParam Long memberNo,
