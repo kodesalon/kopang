@@ -1,0 +1,15 @@
+{
+  "member_address": [
+    {
+      "no": 1,
+      "member_no": 1,
+      "alias": "집",
+      "zip_code": "04524",
+      "address": "서울특별시 중구 세종대로 110",
+      "detail": "101호",
+      "latitude": 37.5665,
+      "longitude": 126.9780,
+      "is_default": true
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.kodesalon.kopang.service.exception.DuplicateRequestException;
 import com.kodesalon.kopang.service.exception.NotFoundException;
 
 @RestControllerAdvice
@@ -20,6 +21,12 @@ public class GlobalExceptionController {
 	public ResponseEntity<KopangExceptionResponse> notFound(RuntimeException e) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND)
 			.body(new KopangExceptionResponse(e.getMessage(), HttpStatus.NOT_FOUND.value()));
+	}
+
+	@ExceptionHandler(DuplicateRequestException.class)
+	public ResponseEntity<KopangExceptionResponse> conflict(RuntimeException e) {
+		return ResponseEntity.status(HttpStatus.CONFLICT)
+			.body(new KopangExceptionResponse(e.getMessage(), HttpStatus.CONFLICT.value()));
 	}
 
 	@ExceptionHandler(Exception.class)

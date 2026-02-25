@@ -38,3 +38,8 @@ out/
 
 ### k6 secret
 k6/lib/secret.json
+
+### js
+node_modules
+package-lock.json
+package.json

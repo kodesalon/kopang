@@ -9,7 +9,6 @@ import static org.mockito.BDDMockito.times;
 import static org.mockito.BDDMockito.verify;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,9 +22,6 @@ import com.kodesalon.kopang.domain.order.Order;
 import com.kodesalon.kopang.domain.order.OrderRepository;
 import com.kodesalon.kopang.domain.order.OrderStatus;
 import com.kodesalon.kopang.domain.order.event.OrderStockEventPublisher;
-import com.kodesalon.kopang.domain.product.Product;
-import com.kodesalon.kopang.domain.product.ProductRepository;
-import com.kodesalon.kopang.service.exception.NotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
@@ -34,47 +30,40 @@ class OrderServiceTest {
 	private @Mock OrderStockEventPublisher orderStockEventPublisher;
 	private @InjectMocks OrderService orderService;
 
-	@DisplayName("상품이 존재하면 주문 생성에 성공하고 저장소에 등록한다")
+	@DisplayName("상품 가격과 수량이 주어지면 주문 생성에 성공하고 저장소에 등록한다")
 	@Test
 	void createOrder_success() {
-		// Long memberNo = 1L;
-		// Long productNo = 1L;
-		// Long warehouseNo = 1L;
-		// Integer count = 2;
-		// BigDecimal productPrice = new BigDecimal(1000);
-		// Product product = new Product(productNo, "테스트상품 이름", "테스트상품 설명", productPrice);
-		// given(productRepository.findByProductNo(productNo))
-		// 	.willReturn(Optional.of(product));
-		// Order expectedResult = Order.createPending(memberNo, productNo, warehouseNo, count, productPrice);
-		// given(orderRepository.register(any(Order.class)))
-		// 	.willReturn(expectedResult);
-		//
-		// Order result = orderService.createOrderPending(memberNo, productNo, warehouseNo, count, productPrice);
-		//
-		// Money totalPrice = new Money(count.longValue() * productPrice.longValue());
-		// assertAll(
-		// 	() -> assertThat(result).isNotNull(),
-		// 	() -> assertThat(result.getMemberNo()).isEqualTo(memberNo),
-		// 	() -> assertThat(result.getStatus()).isEqualTo(OrderStatus.PENDING),
-		// 	() -> assertThat(result.getTotalPrice()).isEqualTo(totalPrice),
-		// 	() -> assertThat(result.getProducts().size()).isEqualTo(1),
-		// 	() -> verify(orderRepository, times(1)).register(any(Order.class))
-		// );
+		Long memberNo = 1L;
+		Long productNo = 1L;
+		Long warehouseNo = 1L;
+		Integer count = 2;
+		BigDecimal productPrice = new BigDecimal(1000);
+		Order expectedResult = Order.createPending(memberNo, productNo, warehouseNo, count, productPrice);
+		given(orderRepository.register(any(Order.class)))
+			.willReturn(expectedResult);
+
+		Order result = orderService.createOrderPending(memberNo, productNo, warehouseNo, count, productPrice);
+
+		Money totalPrice = new Money(count.longValue() * productPrice.longValue());
+		assertAll(
+			() -> assertThat(result).isNotNull(),
+			() -> assertThat(result.getMemberNo()).isEqualTo(memberNo),
+			() -> assertThat(result.getStatus()).isEqualTo(OrderStatus.PENDING),
+			() -> assertThat(result.getTotalPrice()).isEqualTo(totalPrice),
+			() -> assertThat(result.getProducts().size()).isEqualTo(1),
+			() -> verify(orderRepository, times(1)).register(any(Order.class))
+		);
 	}
 
-	@DisplayName("상품이 존재하지 않으면 NotFoundException 예외가 발생한다")
+	@DisplayName("존재하지 않는 주문번호로 결제 취소를 요청하면 NotFoundException 이 발생한다")
 	@Test
-	void createOrder_fail_productNotFound() {
-		// Long productNo = 1L;
-		// Long warehouseNo = 1L;
-		// given(productRepository.findByProductNo(productNo))
-		// 	.willReturn(Optional.empty());
-		//
-		// assertAll(
-		// 	() -> assertThatThrownBy(() -> orderService.createOrderPending(1L, productNo, warehouseNo, 1, new BigDecimal(1000)))
-		// 		.isInstanceOf(NotFoundException.class)
-		// 		.hasMessage(NotFoundException.product(productNo).getMessage()),
-		// 	() -> verify(orderRepository, times(0)).register(any())
-		// );
+	void cancelOrder_fail_orderNotFound() {
+		Long nonExistentOrderNo = Long.MAX_VALUE;
+		given(orderRepository.findByOrderNo(nonExistentOrderNo))
+			.willReturn(java.util.Optional.empty());
+
+		assertThatThrownBy(() -> orderService.cancelOrder(nonExistentOrderNo))
+			.isInstanceOf(com.kodesalon.kopang.service.exception.NotFoundException.class)
+			.hasMessage(com.kodesalon.kopang.service.exception.NotFoundException.order(nonExistentOrderNo).getMessage());
 	}
 }

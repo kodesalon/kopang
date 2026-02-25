@@ -34,6 +34,9 @@ dependencies {
     // cache
     implementation 'com.github.ben-manes.caffeine:caffeine'
 
+    // aop
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+
     // api
     implementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation 'io.rest-assured:spring-mock-mvc'

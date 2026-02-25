@@ -1,0 +1,22 @@
+{
+  "orders": [
+    {
+      "no": 1,
+      "member_no": 1,
+      "total_price": 10000,
+      "status": "PENDING",
+      "ordered_at": "now()",
+      "updated_at": "now()"
+    }
+  ],
+  "order_product": [
+    {
+      "no": 1,
+      "order_no": 1,
+      "product_no": 1,
+      "warehouse_no": 1,
+      "order_price": 10000,
+      "count": 1
+    }
+  ]
+}

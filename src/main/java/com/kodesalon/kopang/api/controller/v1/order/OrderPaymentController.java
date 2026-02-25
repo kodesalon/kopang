@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kodesalon.kopang.api.aop.PreventDuplicateRequest;
 import com.kodesalon.kopang.domain.payment.Payment;
 import com.kodesalon.kopang.service.payment.PaymentOrchestrator;
 
@@ -21,6 +22,7 @@ public class OrderPaymentController {
 		this.paymentOrchestrator = paymentOrchestrator;
 	}
 
+	@PreventDuplicateRequest(keyExpression = "'payment:' + #memberNo + ':' + #orderNo", ttlSeconds = 5)
 	@PostMapping("/{orderNo}/payment")
 	public ResponseEntity<PaymentResponse> confirmPayment(
 		@RequestParam Long memberNo,
