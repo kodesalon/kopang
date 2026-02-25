@@ -1,0 +1,14 @@
+{
+  "warehouse": [
+    {
+      "no": 1,
+      "name": "서울 물류 센터",
+      "region": "SEOUL",
+      "zip_code": "04524",
+      "address": "서울특별시 중구 세종대로 110",
+      "detail": "1층",
+      "latitude": 37.5665,
+      "longitude": 126.9780
+    }
+  ]
+}
