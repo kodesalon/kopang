@@ -4,11 +4,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.kodesalon.kopang.api.aop.PreventDuplicateRequest;
+import com.kodesalon.kopang.api.aop.Idempotent;
 import com.kodesalon.kopang.domain.payment.Payment;
 import com.kodesalon.kopang.service.payment.PaymentOrchestrator;
 
@@ -22,9 +23,10 @@ public class OrderPaymentController {
 		this.paymentOrchestrator = paymentOrchestrator;
 	}
 
-	@PreventDuplicateRequest(keyExpression = "'payment:' + #memberNo + ':' + #orderNo", ttlSeconds = 5)
+	@Idempotent(keyExpression = "#idempotencyKey")
 	@PostMapping("/{orderNo}/payment")
 	public ResponseEntity<PaymentResponse> confirmPayment(
+		@RequestHeader("Idempotency-Key") String idempotencyKey,
 		@RequestParam Long memberNo,
 		@PathVariable Long orderNo,
 		@RequestBody PaymentRequest request

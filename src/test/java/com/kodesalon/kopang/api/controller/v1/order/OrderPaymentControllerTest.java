@@ -24,7 +24,6 @@ import com.kodesalon.kopang.config.Caches;
 import com.kodesalon.kopang.domain.order.Money;
 import com.kodesalon.kopang.domain.payment.PaymentResult;
 import com.kodesalon.kopang.external.MockPaymentClient;
-import com.kodesalon.kopang.service.exception.DuplicateRequestException;
 import com.kodesalon.kopang.service.exception.NotFoundException;
 import com.kodesalon.kopang.service.exception.PaymentFailedException;
 
@@ -38,7 +37,8 @@ import io.restassured.RestAssured;
 	"acceptance/order.json"})
 class OrderPaymentControllerTest {
 
-	private static final String DUPLICATE_PAYMENT_KEY_FORMAT = "duplicate:payment:%d:%d";
+	private static final String IDEMPOTENCY_KEY = "test-idempotency-key-payment-001";
+	private static final String REDIS_IDEMPOTENCY_KEY = "idempotent:" + IDEMPOTENCY_KEY;
 	private static final Long MEMBER_NO = 1L;
 	private static final Long ORDER_NO = 1L;
 	private static final Long PRODUCT_NO = 1L;
@@ -58,11 +58,10 @@ class OrderPaymentControllerTest {
 	@BeforeEach
 	void setUp() {
 		mockPaymentClient.reset();
-		String duplicateKey = String.format(DUPLICATE_PAYMENT_KEY_FORMAT, MEMBER_NO, ORDER_NO);
-		redisTemplate.delete(duplicateKey);
-		Cache cache = caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD);
+		redisTemplate.delete(REDIS_IDEMPOTENCY_KEY);
+		Cache cache = caffeineCacheManager.getCache(Caches.Name.IDEMPOTENCY);
 		if (cache != null) {
-			cache.evict(duplicateKey);
+			cache.evict(REDIS_IDEMPOTENCY_KEY);
 		}
 	}
 
@@ -78,6 +77,7 @@ class OrderPaymentControllerTest {
 		Map<String, Object> responseMap = RestAssured
 			.given().log().all()
 			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.header("Idempotency-Key", IDEMPOTENCY_KEY)
 			.queryParam("memberNo", MEMBER_NO)
 			.body(requestBody)
 			.when()
@@ -100,7 +100,7 @@ class OrderPaymentControllerTest {
 		);
 	}
 
-	@DisplayName("결제가 ABORTED(실패) 상태로 반환되면 주문은 PENDING 으로 롤백되고 500 예외가 발생한다")
+	@DisplayName("결제가 ABORTED(실패) 상태로 반환되면 주문은 PENDING 으로 롤백되고 422 예외가 발생한다")
 	@Test
 	void confirmPayment_fail_aborted() {
 		String failureMessage = "잔액 부족";
@@ -122,23 +122,24 @@ class OrderPaymentControllerTest {
 		Map<String, Object> responseMap = RestAssured
 			.given().log().all()
 			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.header("Idempotency-Key", IDEMPOTENCY_KEY)
 			.queryParam("memberNo", MEMBER_NO)
 			.body(requestBody)
 			.when()
 			.post("/api/v1/orders/{orderNo}/payment", ORDER_NO)
 			.then().log().all()
-			.statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+			.statusCode(HttpStatus.UNPROCESSABLE_ENTITY.value())
 			.extract()
 			.jsonPath().getMap(".");
 
 		String expectedMessage = PaymentFailedException.aborted(PAYMENT_KEY, ORDER_NO, failureMessage).getMessage();
 		assertAll(
-			() -> assertThat(responseMap).containsEntry("code", HttpStatus.INTERNAL_SERVER_ERROR.value()),
+			() -> assertThat(responseMap).containsEntry("code", HttpStatus.UNPROCESSABLE_ENTITY.value()),
 			() -> assertThat(responseMap).containsEntry("message", expectedMessage)
 		);
 	}
 
-	@DisplayName("결제가 EXPIRED(만료) 상태로 반환되면 주문이 취소되고 재고가 복구된 후 500 예외가 발생한다")
+	@DisplayName("결제가 EXPIRED(만료) 상태로 반환되면 주문이 취소되고 재고가 복구된 후 422 예외가 발생한다")
 	@Test
 	void confirmPayment_fail_expired() {
 		String failureMessage = "결제 유효시간 초과";
@@ -160,18 +161,19 @@ class OrderPaymentControllerTest {
 		Map<String, Object> responseMap = RestAssured
 			.given().log().all()
 			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.header("Idempotency-Key", IDEMPOTENCY_KEY)
 			.queryParam("memberNo", MEMBER_NO)
 			.body(requestBody)
 			.when()
 			.post("/api/v1/orders/{orderNo}/payment", ORDER_NO)
 			.then().log().all()
-			.statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+			.statusCode(HttpStatus.UNPROCESSABLE_ENTITY.value())
 			.extract()
 			.jsonPath().getMap(".");
 
 		String expectedMessage = PaymentFailedException.expired(PAYMENT_KEY, ORDER_NO, failureMessage).getMessage();
 		assertAll(
-			() -> assertThat(responseMap).containsEntry("code", HttpStatus.INTERNAL_SERVER_ERROR.value()),
+			() -> assertThat(responseMap).containsEntry("code", HttpStatus.UNPROCESSABLE_ENTITY.value()),
 			() -> assertThat(responseMap).containsEntry("message", expectedMessage)
 		);
 	}
@@ -190,6 +192,7 @@ class OrderPaymentControllerTest {
 		Map<String, Object> responseMap = RestAssured
 			.given().log().all()
 			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.header("Idempotency-Key", IDEMPOTENCY_KEY)
 			.queryParam("memberNo", MEMBER_NO)
 			.body(requestBody)
 			.when()
@@ -219,6 +222,7 @@ class OrderPaymentControllerTest {
 		Map<String, Object> responseMap = RestAssured
 			.given().log().all()
 			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.header("Idempotency-Key", IDEMPOTENCY_KEY)
 			.queryParam("memberNo", MEMBER_NO)
 			.body(requestBody)
 			.when()
@@ -234,11 +238,10 @@ class OrderPaymentControllerTest {
 		);
 	}
 
-	@DisplayName("동일 memberNo 와 orderNo 로 중복 결제 요청이 들어오면 409 Conflict 가 발생한다")
+	@DisplayName("이미 처리 중인 멱등 키로 결제 요청이 들어오면 409 Conflict 가 발생한다")
 	@Test
-	void confirmPayment_fail_duplicateRequest() {
-		String duplicateKey = String.format(DUPLICATE_PAYMENT_KEY_FORMAT, MEMBER_NO, ORDER_NO);
-		redisTemplate.opsForValue().set(duplicateKey, "1");
+	void confirmPayment_fail_processingConflict() {
+		redisTemplate.opsForHash().put(REDIS_IDEMPOTENCY_KEY, "status", "PROCESSING");
 
 		Map<String, Object> requestBody = new HashMap<>();
 		requestBody.put("paymentKey", PAYMENT_KEY);
@@ -249,6 +252,7 @@ class OrderPaymentControllerTest {
 		Map<String, Object> responseMap = RestAssured
 			.given().log().all()
 			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.header("Idempotency-Key", IDEMPOTENCY_KEY)
 			.queryParam("memberNo", MEMBER_NO)
 			.body(requestBody)
 			.when()
@@ -260,7 +264,7 @@ class OrderPaymentControllerTest {
 
 		assertAll(
 			() -> assertThat(responseMap).containsEntry("code", HttpStatus.CONFLICT.value()),
-			() -> assertThat(responseMap).containsEntry("message", DuplicateRequestException.detected().getMessage())
+			() -> assertThat(responseMap).containsEntry("message", "처리 중인 요청이 있습니다")
 		);
 	}
 }
