@@ -306,10 +306,16 @@ class OrderPaymentControllerTest {
 			PaymentResult.Status.ABORTED, failureMessage
 		));
 		Map<String, Object> requestBody = createRequestBody();
+		String expectedMessage = PaymentFailedException.aborted(PAYMENT_KEY, ORDER_NO, failureMessage).getMessage();
 
 		Map<String, Object> firstError = callPaymentApi(requestBody)
 			.statusCode(HttpStatus.UNPROCESSABLE_ENTITY.value())
 			.extract().jsonPath().getMap(".");
+
+		assertAll(
+			() -> assertThat(firstError).containsEntry("code", HttpStatus.UNPROCESSABLE_ENTITY.value()),
+			() -> assertThat(firstError).containsEntry("message", expectedMessage)
+		);
 
 		// 결제 클라이언트를 성공 상태로 복구 — 재요청이 비즈니스 로직을 실행한다면 200이 반환됨
 		mockPaymentClient.reset();
@@ -318,7 +324,6 @@ class OrderPaymentControllerTest {
 			.statusCode(HttpStatus.UNPROCESSABLE_ENTITY.value())
 			.extract().jsonPath().getMap(".");
 
-		String expectedMessage = PaymentFailedException.aborted(PAYMENT_KEY, ORDER_NO, failureMessage).getMessage();
 		assertAll(
 			() -> assertThat(secondError).containsEntry("code", HttpStatus.UNPROCESSABLE_ENTITY.value()),
 			() -> assertThat(secondError).containsEntry("message", expectedMessage)
