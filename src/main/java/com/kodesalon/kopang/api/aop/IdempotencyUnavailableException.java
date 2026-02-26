@@ -1,4 +1,4 @@
-package com.kodesalon.kopang.service.exception;
+package com.kodesalon.kopang.api.aop;
 
 public class IdempotencyUnavailableException extends RuntimeException {
 

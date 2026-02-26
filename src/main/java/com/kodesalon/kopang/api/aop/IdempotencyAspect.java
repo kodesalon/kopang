@@ -29,7 +29,6 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kodesalon.kopang.api.controller.KopangExceptionResponse;
 import com.kodesalon.kopang.config.Caches;
-import com.kodesalon.kopang.service.exception.IdempotencyUnavailableException;
 import com.kodesalon.kopang.service.exception.NotFoundException;
 import com.kodesalon.kopang.service.exception.PaymentFailedException;
 import com.kodesalon.kopang.service.exception.SoldOutException;

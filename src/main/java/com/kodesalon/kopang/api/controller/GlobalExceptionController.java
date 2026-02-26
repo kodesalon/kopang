@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.kodesalon.kopang.service.exception.IdempotencyUnavailableException;
+import com.kodesalon.kopang.api.aop.IdempotencyUnavailableException;
 import com.kodesalon.kopang.service.exception.NotFoundException;
 import com.kodesalon.kopang.service.exception.PaymentFailedException;
 import com.kodesalon.kopang.service.exception.SoldOutException;
