@@ -10,8 +10,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.kodesalon.kopang.service.exception.DuplicateRequestException;
 import com.kodesalon.kopang.service.exception.NotFoundException;
+import com.kodesalon.kopang.service.exception.PaymentFailedException;
+import com.kodesalon.kopang.service.exception.SoldOutException;
 
 class GlobalExceptionControllerTest {
 
@@ -20,52 +21,6 @@ class GlobalExceptionControllerTest {
 	@BeforeEach
 	void setUp() {
 		globalExceptionController = new GlobalExceptionController();
-	}
-
-	@Nested
-	@DisplayName("DuplicateRequestException 처리 테스트")
-	class DuplicateRequestExceptionHandlerTest {
-
-		@DisplayName("DuplicateRequestException 이 발생하면 409 Conflict 응답을 반환한다")
-		@Test
-		void conflict_returns409Status() {
-			DuplicateRequestException exception = DuplicateRequestException.detected();
-
-			ResponseEntity<KopangExceptionResponse> response = globalExceptionController.conflict(exception);
-
-			assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-		}
-
-		@DisplayName("DuplicateRequestException 응답 바디에 예외 메시지와 409 코드가 포함된다")
-		@Test
-		void conflict_includesMessageAndCodeInBody() {
-			DuplicateRequestException exception = DuplicateRequestException.detected();
-
-			ResponseEntity<KopangExceptionResponse> response = globalExceptionController.conflict(exception);
-
-			KopangExceptionResponse body = response.getBody();
-			assertAll(
-				() -> assertThat(body).isNotNull(),
-				() -> assertThat(body.message()).isEqualTo("이미 처리 중인 요청입니다"),
-				() -> assertThat(body.code()).isEqualTo(HttpStatus.CONFLICT.value())
-			);
-		}
-
-		@DisplayName("사용자 정의 메시지를 가진 DuplicateRequestException 도 409 응답으로 처리된다")
-		@Test
-		void conflict_handlesCustomMessageException() {
-			String customMessage = "결제 요청이 이미 처리 중입니다";
-			DuplicateRequestException exception = new DuplicateRequestException(customMessage);
-
-			ResponseEntity<KopangExceptionResponse> response = globalExceptionController.conflict(exception);
-
-			assertAll(
-				() -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT),
-				() -> assertThat(response.getBody()).isNotNull(),
-				() -> assertThat(response.getBody().message()).isEqualTo(customMessage),
-				() -> assertThat(response.getBody().code()).isEqualTo(409)
-			);
-		}
 	}
 
 	@Nested
@@ -119,6 +74,44 @@ class GlobalExceptionControllerTest {
 				() -> assertThat(response.getBody()).isNotNull(),
 				() -> assertThat(response.getBody().message()).isEqualTo("상품 1 를 찾을 수 없습니다"),
 				() -> assertThat(response.getBody().code()).isEqualTo(HttpStatus.NOT_FOUND.value())
+			);
+		}
+	}
+
+	@Nested
+	@DisplayName("SoldOutException 처리 테스트")
+	class SoldOutExceptionHandlerTest {
+
+		@DisplayName("SoldOutException 이 발생하면 409 Conflict 응답을 반환한다")
+		@Test
+		void conflict_returns409ForSoldOut() {
+			SoldOutException exception = SoldOutException.warehouse(1L);
+
+			ResponseEntity<KopangExceptionResponse> response = globalExceptionController.conflict(exception);
+
+			assertAll(
+				() -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT),
+				() -> assertThat(response.getBody()).isNotNull(),
+				() -> assertThat(response.getBody().code()).isEqualTo(HttpStatus.CONFLICT.value())
+			);
+		}
+	}
+
+	@Nested
+	@DisplayName("PaymentFailedException 처리 테스트")
+	class PaymentFailedExceptionHandlerTest {
+
+		@DisplayName("PaymentFailedException 이 발생하면 422 Unprocessable Entity 응답을 반환한다")
+		@Test
+		void unprocessableEntity_returns422ForPaymentFailed() {
+			PaymentFailedException exception = PaymentFailedException.aborted("pay-key", 1L, "잔액 부족");
+
+			ResponseEntity<KopangExceptionResponse> response = globalExceptionController.unprocessableEntity(exception);
+
+			assertAll(
+				() -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY),
+				() -> assertThat(response.getBody()).isNotNull(),
+				() -> assertThat(response.getBody().code()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.value())
 			);
 		}
 	}

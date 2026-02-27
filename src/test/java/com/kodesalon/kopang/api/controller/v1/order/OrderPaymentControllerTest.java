@@ -19,16 +19,18 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
+import com.kodesalon.kopang.api.aop.IdempotencyStatus;
+import com.kodesalon.kopang.api.aop.IdempotentResponse;
 import com.kodesalon.kopang.api.support.AcceptanceTest;
 import com.kodesalon.kopang.config.Caches;
 import com.kodesalon.kopang.domain.order.Money;
 import com.kodesalon.kopang.domain.payment.PaymentResult;
 import com.kodesalon.kopang.external.MockPaymentClient;
-import com.kodesalon.kopang.service.exception.DuplicateRequestException;
 import com.kodesalon.kopang.service.exception.NotFoundException;
 import com.kodesalon.kopang.service.exception.PaymentFailedException;
 
 import io.restassured.RestAssured;
+import io.restassured.response.ValidatableResponse;
 
 @AcceptanceTest({
 	"acceptance/warehouse.json",
@@ -38,7 +40,8 @@ import io.restassured.RestAssured;
 	"acceptance/order.json"})
 class OrderPaymentControllerTest {
 
-	private static final String DUPLICATE_PAYMENT_KEY_FORMAT = "duplicate:payment:%d:%d";
+	private static final String IDEMPOTENCY_KEY = "test-idempotency-key-payment-001";
+	private static final String REDIS_IDEMPOTENCY_KEY = "idempotent:" + IDEMPOTENCY_KEY;
 	private static final Long MEMBER_NO = 1L;
 	private static final Long ORDER_NO = 1L;
 	private static final Long PRODUCT_NO = 1L;
@@ -58,11 +61,10 @@ class OrderPaymentControllerTest {
 	@BeforeEach
 	void setUp() {
 		mockPaymentClient.reset();
-		String duplicateKey = String.format(DUPLICATE_PAYMENT_KEY_FORMAT, MEMBER_NO, ORDER_NO);
-		redisTemplate.delete(duplicateKey);
-		Cache cache = caffeineCacheManager.getCache(Caches.Name.DUPLICATE_REQUEST_GUARD);
+		redisTemplate.delete(REDIS_IDEMPOTENCY_KEY);
+		Cache cache = caffeineCacheManager.getCache(Caches.Name.IDEMPOTENCY);
 		if (cache != null) {
-			cache.evict(duplicateKey);
+			cache.evict(REDIS_IDEMPOTENCY_KEY);
 		}
 	}
 
@@ -78,6 +80,7 @@ class OrderPaymentControllerTest {
 		Map<String, Object> responseMap = RestAssured
 			.given().log().all()
 			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.header("Idempotency-Key", IDEMPOTENCY_KEY)
 			.queryParam("memberNo", MEMBER_NO)
 			.body(requestBody)
 			.when()
@@ -100,7 +103,7 @@ class OrderPaymentControllerTest {
 		);
 	}
 
-	@DisplayName("결제가 ABORTED(실패) 상태로 반환되면 주문은 PENDING 으로 롤백되고 500 예외가 발생한다")
+	@DisplayName("결제가 ABORTED(실패) 상태로 반환되면 주문은 PENDING 으로 롤백되고 422 예외가 발생한다")
 	@Test
 	void confirmPayment_fail_aborted() {
 		String failureMessage = "잔액 부족";
@@ -122,23 +125,24 @@ class OrderPaymentControllerTest {
 		Map<String, Object> responseMap = RestAssured
 			.given().log().all()
 			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.header("Idempotency-Key", IDEMPOTENCY_KEY)
 			.queryParam("memberNo", MEMBER_NO)
 			.body(requestBody)
 			.when()
 			.post("/api/v1/orders/{orderNo}/payment", ORDER_NO)
 			.then().log().all()
-			.statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+			.statusCode(HttpStatus.UNPROCESSABLE_ENTITY.value())
 			.extract()
 			.jsonPath().getMap(".");
 
 		String expectedMessage = PaymentFailedException.aborted(PAYMENT_KEY, ORDER_NO, failureMessage).getMessage();
 		assertAll(
-			() -> assertThat(responseMap).containsEntry("code", HttpStatus.INTERNAL_SERVER_ERROR.value()),
+			() -> assertThat(responseMap).containsEntry("code", HttpStatus.UNPROCESSABLE_ENTITY.value()),
 			() -> assertThat(responseMap).containsEntry("message", expectedMessage)
 		);
 	}
 
-	@DisplayName("결제가 EXPIRED(만료) 상태로 반환되면 주문이 취소되고 재고가 복구된 후 500 예외가 발생한다")
+	@DisplayName("결제가 EXPIRED(만료) 상태로 반환되면 주문이 취소되고 재고가 복구된 후 422 예외가 발생한다")
 	@Test
 	void confirmPayment_fail_expired() {
 		String failureMessage = "결제 유효시간 초과";
@@ -160,18 +164,19 @@ class OrderPaymentControllerTest {
 		Map<String, Object> responseMap = RestAssured
 			.given().log().all()
 			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.header("Idempotency-Key", IDEMPOTENCY_KEY)
 			.queryParam("memberNo", MEMBER_NO)
 			.body(requestBody)
 			.when()
 			.post("/api/v1/orders/{orderNo}/payment", ORDER_NO)
 			.then().log().all()
-			.statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+			.statusCode(HttpStatus.UNPROCESSABLE_ENTITY.value())
 			.extract()
 			.jsonPath().getMap(".");
 
 		String expectedMessage = PaymentFailedException.expired(PAYMENT_KEY, ORDER_NO, failureMessage).getMessage();
 		assertAll(
-			() -> assertThat(responseMap).containsEntry("code", HttpStatus.INTERNAL_SERVER_ERROR.value()),
+			() -> assertThat(responseMap).containsEntry("code", HttpStatus.UNPROCESSABLE_ENTITY.value()),
 			() -> assertThat(responseMap).containsEntry("message", expectedMessage)
 		);
 	}
@@ -190,6 +195,7 @@ class OrderPaymentControllerTest {
 		Map<String, Object> responseMap = RestAssured
 			.given().log().all()
 			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.header("Idempotency-Key", IDEMPOTENCY_KEY)
 			.queryParam("memberNo", MEMBER_NO)
 			.body(requestBody)
 			.when()
@@ -219,6 +225,7 @@ class OrderPaymentControllerTest {
 		Map<String, Object> responseMap = RestAssured
 			.given().log().all()
 			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.header("Idempotency-Key", IDEMPOTENCY_KEY)
 			.queryParam("memberNo", MEMBER_NO)
 			.body(requestBody)
 			.when()
@@ -234,11 +241,10 @@ class OrderPaymentControllerTest {
 		);
 	}
 
-	@DisplayName("동일 memberNo 와 orderNo 로 중복 결제 요청이 들어오면 409 Conflict 가 발생한다")
+	@DisplayName("이미 처리 중인 멱등 키로 결제 요청이 들어오면 409 Conflict 가 발생한다")
 	@Test
-	void confirmPayment_fail_duplicateRequest() {
-		String duplicateKey = String.format(DUPLICATE_PAYMENT_KEY_FORMAT, MEMBER_NO, ORDER_NO);
-		redisTemplate.opsForValue().set(duplicateKey, "1");
+	void confirmPayment_idempotent_conflict_processingKey() {
+		caffeineCacheManager.getCache(Caches.Name.IDEMPOTENCY).put(REDIS_IDEMPOTENCY_KEY, IdempotentResponse.processing());
 
 		Map<String, Object> requestBody = new HashMap<>();
 		requestBody.put("paymentKey", PAYMENT_KEY);
@@ -249,6 +255,7 @@ class OrderPaymentControllerTest {
 		Map<String, Object> responseMap = RestAssured
 			.given().log().all()
 			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.header("Idempotency-Key", IDEMPOTENCY_KEY)
 			.queryParam("memberNo", MEMBER_NO)
 			.body(requestBody)
 			.when()
@@ -260,7 +267,123 @@ class OrderPaymentControllerTest {
 
 		assertAll(
 			() -> assertThat(responseMap).containsEntry("code", HttpStatus.CONFLICT.value()),
-			() -> assertThat(responseMap).containsEntry("message", DuplicateRequestException.detected().getMessage())
+			() -> assertThat(responseMap).containsEntry("message", "처리 중인 요청이 있습니다")
 		);
+	}
+
+	@DisplayName("성공한 결제 요청에 동일한 멱등 키로 재요청하면 비즈니스 로직을 재실행하지 않고 캐시된 성공 응답을 반환한다")
+	@Test
+	void confirmPayment_idempotent_retryAfterSuccess_returnsCachedResponse() {
+		Map<String, Object> requestBody = createRequestBody();
+
+		Map<String, Object> firstResponse = callPaymentApi(requestBody)
+			.statusCode(HttpStatus.OK.value())
+			.extract().jsonPath().getMap(".");
+
+		// 결제 클라이언트를 실패 상태로 재설정 — 재요청이 비즈니스 로직을 실행한다면 422가 반환됨
+		mockPaymentClient.setNextResult(new PaymentResult(
+			PAYMENT_KEY, ORDER_NO, new Money(AMOUNT), LocalDateTime.now(),
+			PaymentResult.Status.ABORTED, "비즈니스 로직이 재실행된 경우 이 결과가 반환됨"
+		));
+
+		Map<String, Object> secondResponse = callPaymentApi(requestBody)
+			.statusCode(HttpStatus.OK.value())
+			.extract().jsonPath().getMap(".");
+
+		assertAll(
+			() -> assertThat(secondResponse).containsEntry("orderNo", ORDER_NO.intValue()),
+			() -> assertThat(secondResponse).containsEntry("paymentStatus", "DONE"),
+			() -> assertThat(secondResponse.get("paymentNo")).isEqualTo(firstResponse.get("paymentNo"))
+		);
+	}
+
+	@DisplayName("실패한 결제 요청에 동일한 멱등 키로 재요청하면 비즈니스 로직을 재실행하지 않고 캐시된 오류 응답을 반환한다")
+	@Test
+	void confirmPayment_idempotent_retryAfterFailure_returnsCachedErrorResponse() {
+		String failureMessage = "잔액 부족";
+		mockPaymentClient.setNextResult(new PaymentResult(
+			PAYMENT_KEY, ORDER_NO, new Money(AMOUNT), LocalDateTime.now(),
+			PaymentResult.Status.ABORTED, failureMessage
+		));
+		Map<String, Object> requestBody = createRequestBody();
+		String expectedMessage = PaymentFailedException.aborted(PAYMENT_KEY, ORDER_NO, failureMessage).getMessage();
+
+		Map<String, Object> firstError = callPaymentApi(requestBody)
+			.statusCode(HttpStatus.UNPROCESSABLE_ENTITY.value())
+			.extract().jsonPath().getMap(".");
+
+		assertAll(
+			() -> assertThat(firstError).containsEntry("code", HttpStatus.UNPROCESSABLE_ENTITY.value()),
+			() -> assertThat(firstError).containsEntry("message", expectedMessage)
+		);
+
+		// 결제 클라이언트를 성공 상태로 복구 — 재요청이 비즈니스 로직을 실행한다면 200이 반환됨
+		mockPaymentClient.reset();
+
+		Map<String, Object> secondError = callPaymentApi(requestBody)
+			.statusCode(HttpStatus.UNPROCESSABLE_ENTITY.value())
+			.extract().jsonPath().getMap(".");
+
+		assertAll(
+			() -> assertThat(secondError).containsEntry("code", HttpStatus.UNPROCESSABLE_ENTITY.value()),
+			() -> assertThat(secondError).containsEntry("message", expectedMessage)
+		);
+	}
+
+	@DisplayName("Caffeine 캐시가 비어있고 Redis에 완료 상태가 있으면 Redis에서 응답을 복원하고 Caffeine에 동기화한다")
+	@Test
+	void confirmPayment_idempotent_caffeineMiss_redisHit_restoresAndSyncsCache() {
+		Map<String, Object> requestBody = createRequestBody();
+
+		Map<String, Object> firstResponse = callPaymentApi(requestBody)
+			.statusCode(HttpStatus.OK.value())
+			.extract().jsonPath().getMap(".");
+
+		// Caffeine만 비워 L2(Redis) 조회 경로를 강제로 활성화
+		Cache caffeineCache = caffeineCacheManager.getCache(Caches.Name.IDEMPOTENCY);
+		if (caffeineCache != null) {
+			caffeineCache.evict(REDIS_IDEMPOTENCY_KEY);
+		}
+
+		// 두 번째 요청: Redis 값 기반으로 응답 복원
+		Map<String, Object> secondResponse = callPaymentApi(requestBody)
+			.statusCode(HttpStatus.OK.value())
+			.extract().jsonPath().getMap(".");
+
+		assertAll(
+			() -> assertThat(secondResponse).containsEntry("paymentNo", firstResponse.get("paymentNo")),
+			() -> assertThat(secondResponse).containsEntry("orderNo", ORDER_NO.intValue()),
+			() -> assertThat(secondResponse).containsEntry("paymentStatus", "DONE")
+		);
+
+		// Caffeine에 동기화 확인
+		Cache syncedCache = caffeineCacheManager.getCache(Caches.Name.IDEMPOTENCY);
+		assertThat(syncedCache).isNotNull();
+		Cache.ValueWrapper wrapper = syncedCache.get(REDIS_IDEMPOTENCY_KEY);
+		assertThat(wrapper).isNotNull();
+		IdempotentResponse syncedState = (IdempotentResponse) wrapper.get();
+		assertThat(syncedState).isNotNull();
+		assertThat(syncedState.status()).isEqualTo(IdempotencyStatus.COMPLETED);
+	}
+
+	private ValidatableResponse callPaymentApi(Map<String, Object> requestBody) {
+		return RestAssured
+			.given().log().all()
+			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.header("Idempotency-Key", IDEMPOTENCY_KEY)
+			.queryParam("memberNo", MEMBER_NO)
+			.body(requestBody)
+			.when()
+			.post("/api/v1/orders/{orderNo}/payment", ORDER_NO)
+			.then().log().all();
+	}
+
+	private Map<String, Object> createRequestBody() {
+		Map<String, Object> requestBody = new HashMap<>();
+		requestBody.put("paymentKey", PAYMENT_KEY);
+		requestBody.put("amount", AMOUNT);
+		requestBody.put("productNo", PRODUCT_NO);
+		requestBody.put("orderCount", 1);
+		return requestBody;
 	}
 }

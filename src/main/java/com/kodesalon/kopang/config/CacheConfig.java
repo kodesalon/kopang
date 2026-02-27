@@ -102,15 +102,14 @@ public class CacheConfig {
 				.recordStats()
 				.build()
 		);
-		// Caffeine TTL은 Redis TTL(@PreventDuplicateRequest.ttlSeconds 기본값 3s)보다
-		// 작거나 같아야 합니다. Caffeine 만료 후 Redis 키가 여전히 존재하면 Redis에서
-		// 차단되며, 이는 의도된 동작입니다 (더 안전한 방향). 반대로 Caffeine TTL이
-		// Redis TTL을 초과하면 Redis 만료 이후에도 같은 노드에서만 불필요하게 차단됩니다.
-		cacheManager.registerCustomCache(Caches.Name.DUPLICATE_REQUEST_GUARD,
+		// 멱등성 응답 캐시 (L1 fast-path).
+		// Caffeine은 동일 노드 내 빠른 중복 요청 차단을 담당하며, Redis가 source of truth입니다.
+		// TTL은 PROCESSING 크래시 안전장치(최대 30s) 이상으로 설정합니다.
+		cacheManager.registerCustomCache(Caches.Name.IDEMPOTENCY,
 			Caffeine.newBuilder()
 				.initialCapacity(1000)
 				.maximumSize(10000)
-				.expireAfterWrite(3, TimeUnit.SECONDS)
+				.expireAfterWrite(5, TimeUnit.MINUTES)
 				.build()
 		);
 		return cacheManager;

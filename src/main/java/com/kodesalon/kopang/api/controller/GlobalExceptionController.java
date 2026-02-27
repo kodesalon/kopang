@@ -5,8 +5,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.kodesalon.kopang.service.exception.DuplicateRequestException;
+import com.kodesalon.kopang.api.aop.IdempotencyUnavailableException;
 import com.kodesalon.kopang.service.exception.NotFoundException;
+import com.kodesalon.kopang.service.exception.PaymentFailedException;
+import com.kodesalon.kopang.service.exception.SoldOutException;
 
 @RestControllerAdvice
 public class GlobalExceptionController {
@@ -23,10 +25,22 @@ public class GlobalExceptionController {
 			.body(new KopangExceptionResponse(e.getMessage(), HttpStatus.NOT_FOUND.value()));
 	}
 
-	@ExceptionHandler(DuplicateRequestException.class)
+	@ExceptionHandler(SoldOutException.class)
 	public ResponseEntity<KopangExceptionResponse> conflict(RuntimeException e) {
 		return ResponseEntity.status(HttpStatus.CONFLICT)
 			.body(new KopangExceptionResponse(e.getMessage(), HttpStatus.CONFLICT.value()));
+	}
+
+	@ExceptionHandler(PaymentFailedException.class)
+	public ResponseEntity<KopangExceptionResponse> unprocessableEntity(RuntimeException e) {
+		return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+			.body(new KopangExceptionResponse(e.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY.value()));
+	}
+
+	@ExceptionHandler(IdempotencyUnavailableException.class)
+	public ResponseEntity<KopangExceptionResponse> serviceUnavailable(RuntimeException e) {
+		return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+			.body(new KopangExceptionResponse(e.getMessage(), HttpStatus.SERVICE_UNAVAILABLE.value()));
 	}
 
 	@ExceptionHandler(Exception.class)

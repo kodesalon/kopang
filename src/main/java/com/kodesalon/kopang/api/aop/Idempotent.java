@@ -7,9 +7,11 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface PreventDuplicateRequest {
+public @interface Idempotent {
 
 	String keyExpression();
 
-	int ttlSeconds() default 3;
+	int ttlHours() default 24;
+
+	int processingTimeoutSeconds() default 30;
 }

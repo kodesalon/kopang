@@ -10,6 +10,6 @@ public interface Caches {
 		String MEMBER_ADDRESS = "member_address";
 		String PRODUCT_WAREHOUSES = "product_warehouses";
 		String PRODUCT = "product";
-		String DUPLICATE_REQUEST_GUARD = "duplicate_request_guard";
+		String IDEMPOTENCY = "idempotency";
 	}
 }
