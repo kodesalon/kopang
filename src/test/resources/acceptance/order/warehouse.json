@@ -1,0 +1,14 @@
+{
+  "warehouse": [
+    {
+      "no": 1,
+      "name": "서울 창고",
+      "region": "SEOUL",
+      "zip_code": "05717",
+      "address": "서울시 송파구 올림픽로",
+      "detail": null,
+      "latitude": 37.51,
+      "longitude": 127.01
+    }
+  ]
+}
