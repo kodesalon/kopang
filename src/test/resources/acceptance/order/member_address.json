@@ -1,0 +1,15 @@
+{
+  "member_address": [
+    {
+      "no": 1,
+      "member_no": 1,
+      "alias": "집",
+      "zip_code": "06164",
+      "address": "서울시 강남구 테헤란로",
+      "detail": null,
+      "latitude": 37.5,
+      "longitude": 127.0,
+      "is_default": true
+    }
+  ]
+}

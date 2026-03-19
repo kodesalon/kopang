@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.kodesalon.kopang.service.exception.NotFoundException;
+import com.kodesalon.kopang.service.exception.PaymentFailedException;
+import com.kodesalon.kopang.service.exception.SoldOutException;
 
 @RestControllerAdvice
 public class GlobalExceptionController {
@@ -20,6 +22,18 @@ public class GlobalExceptionController {
 	public ResponseEntity<KopangExceptionResponse> notFound(RuntimeException e) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND)
 			.body(new KopangExceptionResponse(e.getMessage(), HttpStatus.NOT_FOUND.value()));
+	}
+
+	@ExceptionHandler(SoldOutException.class)
+	public ResponseEntity<KopangExceptionResponse> soldOut(RuntimeException e) {
+		return ResponseEntity.status(HttpStatus.CONFLICT)
+			.body(new KopangExceptionResponse(e.getMessage(), HttpStatus.CONFLICT.value()));
+	}
+
+	@ExceptionHandler(PaymentFailedException.class)
+	public ResponseEntity<KopangExceptionResponse> paymentFailed(RuntimeException e) {
+		return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED)
+			.body(new KopangExceptionResponse(e.getMessage(), HttpStatus.PAYMENT_REQUIRED.value()));
 	}
 
 	@ExceptionHandler(Exception.class)
