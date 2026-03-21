@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 
 import com.kodesalon.kopang.domain.queue.EventQueueRepository;
 import com.kodesalon.kopang.domain.queue.QueueEntry;
+import com.kodesalon.kopang.service.exception.DuplicateQueueEntryException;
 
 @Repository
 public class EventQueueRepositoryImpl implements EventQueueRepository {
@@ -24,6 +25,7 @@ public class EventQueueRepositoryImpl implements EventQueueRepository {
 	private static final String ACTIVE_EVENTS = "queue:active_events";
 	private static final String ACTIVE_KEY = "queue:active:%d";
 	private static final String LOCK_KEY = "queue:lock:%d";
+	private static final String MEMBER_KEY = "queue:member:%d:%d";
 	private static final long ENTRY_TTL_SEC = 86400L;
 	private static final long ACTIVE_TTL_SEC = 300L;
 	private static final long LOCK_TTL_SEC = 2L;
@@ -36,9 +38,16 @@ public class EventQueueRepositoryImpl implements EventQueueRepository {
 
 	@Override
 	public QueueEntry enqueue(Long eventId, Long memberNo, Integer count) {
+		String memberKey = String.format(MEMBER_KEY, eventId, memberNo);
 		String token = UUID.randomUUID().toString();
-		long requestedAt = System.currentTimeMillis();
 
+		Boolean acquired = redisTemplate.opsForValue()
+			.setIfAbsent(memberKey, token, Duration.ofSeconds(ENTRY_TTL_SEC));
+		if (!Boolean.TRUE.equals(acquired)) {
+			throw DuplicateQueueEntryException.of(eventId, memberNo);
+		}
+
+		long requestedAt = System.currentTimeMillis();
 		String queueKey = String.format(QUEUE_KEY, eventId);
 		String entryKey = String.format(ENTRY_KEY, token);
 

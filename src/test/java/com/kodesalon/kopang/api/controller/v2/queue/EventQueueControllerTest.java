@@ -53,11 +53,43 @@ class EventQueueControllerTest {
 		if (entryKeys != null && !entryKeys.isEmpty()) {
 			redisTemplate.delete(entryKeys);
 		}
+		Set<String> memberKeys = redisTemplate.keys("queue:member:*");
+		if (memberKeys != null && !memberKeys.isEmpty()) {
+			redisTemplate.delete(memberKeys);
+		}
 	}
 
 	@Nested
 	@DisplayName("POST /api/v2/events/{eventId}/queue — 대기열 진입")
 	class EnterQueue {
+
+		@Test
+		@DisplayName("동일 회원이 같은 이벤트 대기열에 중복 진입하면, 409 응답을 반환한다")
+		void enterQueue_DuplicateMember_Returns409() {
+			// given
+			redisTemplate.opsForValue().set(REDIS_STOCK_KEY, "100");
+
+			RestAssured
+				.given()
+				.contentType(MediaType.APPLICATION_JSON_VALUE)
+				.queryParam("memberNo", MEMBER_NO)
+				.body(Map.of("count", 1))
+				.when()
+				.post("/api/v2/events/{eventId}/queue", EVENT_ID)
+				.then()
+				.statusCode(HttpStatus.ACCEPTED.value());
+
+			// when & then
+			RestAssured
+				.given().log().all()
+				.contentType(MediaType.APPLICATION_JSON_VALUE)
+				.queryParam("memberNo", MEMBER_NO)
+				.body(Map.of("count", 1))
+				.when()
+				.post("/api/v2/events/{eventId}/queue", EVENT_ID)
+				.then().log().all()
+				.statusCode(HttpStatus.CONFLICT.value());
+		}
 
 		@Test
 		@DisplayName("유효한 요청으로 대기열에 진입하면, 202 응답과 함께 token, position, estimatedWaitMs를 반환한다")
