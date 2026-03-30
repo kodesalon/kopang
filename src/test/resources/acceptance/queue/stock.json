@@ -1,0 +1,10 @@
+{
+  "stock": [
+    {
+      "no": 1,
+      "product_no": 1,
+      "warehouse_no": 1,
+      "quantity": 100
+    }
+  ]
+}
