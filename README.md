@@ -38,9 +38,12 @@
 
 ## 요청 흐름
 
-### 주문 흐름
+### 주문 흐름 (v1 - 공정성 보장 x)
 
 <img width="1057" height="584" alt="스크린샷 2026-03-31 오전 1 20 34" src="https://github.com/user-attachments/assets/4fe621d5-2c8e-4eea-91b6-e8ed2b26cf7d" />
+
+### 주문 흐름 (v2 - 공정성 보장 o)
+<img width="1020" height="782" alt="스크린샷 2026-03-31 오전 2 45 47" src="https://github.com/user-attachments/assets/4207fad0-6109-4eec-9a13-b3515f897cd2" />
 
 ### 결제 흐름
 
