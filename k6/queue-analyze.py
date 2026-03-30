@@ -60,7 +60,7 @@ def parse_results(filepath: str):
 
 # ── 역전 카운터 ───────────────────────────────────────────────────────────────
 
-BATCH_SIZE = 10  # EventQueueWorker 배치 크기와 동일
+BATCH_SIZE = 400  # EventQueueWorker 배치 크기와 동일
 
 
 def batch_of(position: int) -> int:

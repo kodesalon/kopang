@@ -15,7 +15,7 @@ import com.kodesalon.kopang.service.queue.EventQueueService;
 public class EventQueueWorker {
 
 	private static final Logger log = LoggerFactory.getLogger(EventQueueWorker.class);
-	private static final int BATCH_SIZE = 10;
+	private static final int BATCH_SIZE = 400;
 
 	private final EventQueueService eventQueueService;
 

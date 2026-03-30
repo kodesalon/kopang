@@ -36,7 +36,7 @@ QUEUE_ACTIVE_KEY="queue:active:${EVENT_ID}"
 QUEUE_LOCK_KEY="queue:lock:${EVENT_ID}"
 MEMBER_CACHE_KEY="member_address::${MEMBER_NO}"
 
-VU_COUNT=50
+VU_COUNT=800
 OUTPUT_FILE="k6_v2_output.txt"
 
 # ─── 색상 출력 ──────────────────────────────────────────────────────────────
@@ -89,6 +89,13 @@ ENTRY_KEYS=$(redis-cli KEYS "queue:entry:*" | wc -l | tr -d ' ')
 if [ "$ENTRY_KEYS" -gt "0" ]; then
   redis-cli KEYS "queue:entry:*" | xargs redis-cli DEL >/dev/null
   info "  queue:entry:* ${ENTRY_KEYS}개 삭제"
+fi
+
+# queue:member:{eventId}:* 패턴 삭제 (중복 대기열 진입 방지 키)
+MEMBER_KEYS=$(redis-cli KEYS "queue:member:${EVENT_ID}:*" | wc -l | tr -d ' ')
+if [ "$MEMBER_KEYS" -gt "0" ]; then
+  redis-cli KEYS "queue:member:${EVENT_ID}:*" | xargs redis-cli DEL >/dev/null
+  info "  queue:member:${EVENT_ID}:* ${MEMBER_KEYS}개 삭제"
 fi
 
 # Redis 재고 설정 (VU 수 + 워밍업 1개)

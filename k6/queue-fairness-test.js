@@ -7,10 +7,12 @@
  *   v1(Lua Script)의 결과와 역전율을 비교한다.
  *
  * 측정 방식:
- *   Phase 1 — VU=50이 동시에 POST /api/v2/events/{eventId}/queue 진입
+ *   Phase 1 — VU=800이 동시에 POST /api/v2/events/{eventId}/queue 진입
  *             → position(서버가 부여한 FIFO 순위) + token 수신
+ *             → 각 VU는 고유 memberNo(=vuId, 1~800)를 사용 (중복 진입 방지 대응)
  *   Phase 2 — GET /api/v2/events/{eventId}/queue/{token}/status 폴링
  *             → ACTIVE 상태가 될 때까지 0.5초 간격으로 대기
+ *             → BATCH_SIZE=400 기준: 2배치 × ~2초 = 최대 ~4초 대기
  *   Phase 3 — POST /api/v1/orders + X-Queue-Token 헤더로 주문
  *             → orderNo(DB auto-increment) 기록
  *
@@ -32,23 +34,22 @@ import http from 'k6/http';
 import { sleep } from 'k6';
 import exec from 'k6/execution';
 
-const BASE_URL  = __ENV.BASE_URL   || 'http://localhost:8080';
-const EVENT_ID  = __ENV.EVENT_ID   || 1;
-const MEMBER_NO = __ENV.MEMBER_NO  || 1;
-const PRODUCT_NO = __ENV.PRODUCT_NO || 1;
+const BASE_URL   = __ENV.BASE_URL    || 'http://localhost:8080';
+const EVENT_ID   = __ENV.EVENT_ID    || 1;
+const PRODUCT_NO = __ENV.PRODUCT_NO  || 1;
 
 const POLL_INTERVAL_SEC = 0.5;   // 워커 fixedDelay=500ms 에 맞춤
-const MAX_POLL_ATTEMPTS = 60;    // 최대 30초 대기
+const MAX_POLL_ATTEMPTS = 120;   // 최대 60초 대기 (BATCH_SIZE=400, 2배치 × ~2초 + 여유)
 
 export const options = {
   scenarios: {
     v2_fairness_check: {
-      // per-vu-iterations: VU 50개가 각각 정확히 1번씩 실행
-      // → 50개의 독립된 사용자가 동시에 대기열 진입
+      // per-vu-iterations: VU 800개가 각각 정확히 1번씩 실행
+      // → 800개의 독립된 사용자가 동시에 대기열 진입 (BATCH_SIZE=400 기준 2배치)
       executor: 'per-vu-iterations',
-      vus: 50,
+      vus: 800,
       iterations: 1,
-      maxDuration: '90s',
+      maxDuration: '120s',
     },
   },
   // 공정성 분석이 목적 — 성능 threshold 불필요
@@ -56,13 +57,14 @@ export const options = {
 };
 
 export default function () {
-  const vuId = exec.vu.idInTest; // 1~50
+  const vuId = exec.vu.idInTest; // 1~800, 각 VU의 고유 memberNo로 활용
 
   // ── Phase 1: 대기열 진입 ─────────────────────────────────────────────────
   const entryTime = Date.now();
 
+  // 각 VU가 고유 memberNo(=vuId)를 사용 → 중복 대기열 진입 방지 정책 대응
   const enterRes = http.post(
-    `${BASE_URL}/api/v2/events/${EVENT_ID}/queue?memberNo=${MEMBER_NO}`,
+    `${BASE_URL}/api/v2/events/${EVENT_ID}/queue?memberNo=${vuId}`,
     JSON.stringify({ count: 1 }),
     {
       headers: { 'Content-Type': 'application/json' },
@@ -114,7 +116,7 @@ export default function () {
 
   // ── Phase 3: 주문 (ACTIVE 토큰으로 v1 API 호출) ─────────────────────────
   const orderRes = http.post(
-    `${BASE_URL}/api/v1/orders?memberNo=${MEMBER_NO}`,
+    `${BASE_URL}/api/v1/orders?memberNo=${vuId}`,
     JSON.stringify({ productNo: Number(PRODUCT_NO), count: 1 }),
     {
       headers: {
