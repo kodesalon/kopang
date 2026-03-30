@@ -36,5 +36,8 @@ out/
 ### VS Code ###
 .vscode/
 
+### macOS
+.DS_Store
+
 ### k6 secret
 k6/lib/secret.json
