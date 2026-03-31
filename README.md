@@ -36,6 +36,25 @@
 
 ---
 
+
+## CI/CD
+
+GitHub push부터 EC2 WAS 기동까지 AWS CodePipeline으로 자동화된 배포 파이프라인을 구성했습니다.
+
+<img width="1028" height="789" alt="스크린샷 2026-03-31 오후 2 20 17" src="https://github.com/user-attachments/assets/a614b7fd-a613-4edc-9fc8-ceacc8ec4a6d" />
+
+
+| 단계 | 주체 | 핵심 동작 |
+|------|------|-----------|
+| **Webhook** | GitHub(CodeConnections App) | `deploy` push 감지 → CodePipeline에 이벤트 전달 |
+| **Source** | CodePipeline | GitHub에서 소스 ZIP 취득 → S3 아티팩트 버킷에 직접 업로드 |
+| **Build** | CodePipeline → CodeBuild | `StartBuild` API 호출 시 S3 버킷+키 전달 → CodeBuild 런타임이 S3에서 자동 다운로드 → `./gradlew build` → 빌드 산출물을 S3에 자동 업로드 |
+| **Deploy** | CodePipeline → CodeDeploy | `CreateDeployment` API 호출 시 S3 revision 위치 전달 → EC2의 CodeDeploy Agent가 폴링으로 지시 수신 → S3에서 직접 아티팩트 pull → `appspec.yml` lifecycle hooks 실행 |
+| **Runtime** | EC2 + RDS | Spring Boot WAS 기동 후 RDS(MySQL) 연결 |
+
+
+---
+
 ## 요청 흐름
 
 ### 주문 흐름 (v1 - 공정성 보장 x)
