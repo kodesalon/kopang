@@ -25,6 +25,7 @@
 
 import http from 'k6/http';
 import exec from 'k6/execution';
+import { sleep } from 'k6';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 const PRODUCT_NO = __ENV.PRODUCT_NO || 1;
@@ -36,7 +37,7 @@ export const options = {
       // per-vu-iterations: 각 VU가 정확히 1번만 실행
       // → VU 50개가 동시에 1개 요청씩 = 총 50 요청
       executor: 'per-vu-iterations',
-      vus: 50,
+      vus: Number(__ENV.VUS || 50),
       iterations: 1,
       maxDuration: '30s',
     },
@@ -47,6 +48,10 @@ export const options = {
 
 export default function () {
   const vuId = exec.vu.idInTest; // 1~50 (VU 번호, 시작 순서 아님)
+
+  // STAGGER_MS > 0이면 VU마다 (vuId - 1) × STAGGER_MS만큼 늦게 보낸다 → 보낸 순서가 분명해짐
+  const STAGGER_MS = Number(__ENV.STAGGER_MS || 0);
+  if (STAGGER_MS > 0) sleep((vuId - 1) * STAGGER_MS / 1000);
 
   // HTTP 발송 직전 타임스탬프 → "보낸 순서"의 proxy
   const sendTime = Date.now();
