@@ -1,6 +1,5 @@
 package com.kodesalon.kopang.storage.order;
 
-import static com.kodesalon.kopang.domain.order.OrderStatus.CANCELLED;
 import static com.kodesalon.kopang.domain.order.OrderStatus.PAYMENT_IN_PROGRESS;
 import static com.kodesalon.kopang.domain.order.OrderStatus.PENDING;
 
@@ -14,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import com.kodesalon.kopang.domain.order.Order;
 import com.kodesalon.kopang.domain.order.OrderRepository;
+import com.kodesalon.kopang.domain.order.OrderStatus;
 
 @Repository
 public class OrderRepositoryImpl implements OrderRepository {
@@ -36,8 +36,8 @@ public class OrderRepositoryImpl implements OrderRepository {
 	}
 
 	@Override
-	public void updateOrder(Order order) {
-		orderJpaRepository.updateOrder(order.getNo(), order.getStatus());
+	public boolean updateStatus(Long orderNo, OrderStatus expected, OrderStatus next) {
+		return orderJpaRepository.updateStatus(orderNo, expected, next) == 1;
 	}
 
 	@Override
@@ -58,10 +58,5 @@ public class OrderRepositoryImpl implements OrderRepository {
 			.stream()
 			.map(OrderJpaEntity::toDomain)
 			.toList();
-	}
-
-	@Override
-	public void updateStatusToCancelInBatch(List<Long> expiredNos) {
-		orderJpaRepository.updateStatusToCancelInBatch(expiredNos, CANCELLED, List.of(PENDING, PAYMENT_IN_PROGRESS));
 	}
 }

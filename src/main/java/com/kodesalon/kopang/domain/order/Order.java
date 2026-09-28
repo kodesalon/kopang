@@ -19,13 +19,18 @@ public class Order {
 
 	public Order preparePayment(Money amount, LocalDateTime now) {
 		validateEditable();
+		if (status.isPaymentInProgress()) {
+			throw new IllegalStateException("이미 결제가 진행 중인 주문입니다.");
+		}
 		checkExpired(now);
 		validateAmount(amount);
 		return new Order(no, memberNo, OrderStatus.PAYMENT_IN_PROGRESS, totalPrice, products, orderedAt);
 	}
 
 	public Order rollbackToPending() {
-		validateEditable();
+		if (!status.isPaymentInProgress()) {
+			throw new IllegalStateException("결제 진행 중인 주문만 결제 대기로 되돌릴 수 있습니다.");
+		}
 		return new Order(no, memberNo, OrderStatus.PENDING, totalPrice, products, orderedAt);
 	}
 

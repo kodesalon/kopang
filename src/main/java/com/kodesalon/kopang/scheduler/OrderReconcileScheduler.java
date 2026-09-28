@@ -20,14 +20,13 @@ public class OrderReconcileScheduler {
 		this.paymentRecoveryOrchestrator = paymentRecoveryOrchestrator;
 	}
 
+	/**
+	 * 한 번 실행에 한 번만 조회한다. PG 조회에 실패한 주문은 결제 중 상태로 남으므로,
+	 * 다시 조회하면 같은 주문을 끝없이 조회하며 스케줄러 스레드를 붙잡는다. 실패한 주문은 다음 주기에 다시 시도한다.
+	 */
 	@Scheduled(fixedDelay = 60_000)
 	public void reconcileStuckPaymentOrders() {
-		while (true) {
-			Orders expiredOrders = orderService.findExpiredInProgressOrders(LocalDateTime.now());
-			if (expiredOrders.isEmpty()) {
-				break;
-			}
-			expiredOrders.forEach(paymentRecoveryOrchestrator::recover);
-		}
+		Orders expiredOrders = orderService.findExpiredInProgressOrders(LocalDateTime.now());
+		expiredOrders.forEach(paymentRecoveryOrchestrator::recover);
 	}
 }

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.kodesalon.kopang.service.exception.DuplicateQueueEntryException;
 import com.kodesalon.kopang.service.exception.NotFoundException;
+import com.kodesalon.kopang.service.exception.OrderStatusConflictException;
 import com.kodesalon.kopang.service.exception.PaymentFailedException;
 import com.kodesalon.kopang.service.exception.SoldOutException;
 
@@ -33,6 +34,12 @@ public class GlobalExceptionController {
 
 	@ExceptionHandler(DuplicateQueueEntryException.class)
 	public ResponseEntity<KopangExceptionResponse> duplicateQueueEntry(RuntimeException e) {
+		return ResponseEntity.status(HttpStatus.CONFLICT)
+			.body(new KopangExceptionResponse(e.getMessage(), HttpStatus.CONFLICT.value()));
+	}
+
+	@ExceptionHandler(OrderStatusConflictException.class)
+	public ResponseEntity<KopangExceptionResponse> orderStatusConflict(RuntimeException e) {
 		return ResponseEntity.status(HttpStatus.CONFLICT)
 			.body(new KopangExceptionResponse(e.getMessage(), HttpStatus.CONFLICT.value()));
 	}
