@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +32,65 @@ class OrderTest {
 			() -> assertThat(order.getTotalPrice()).isEqualTo(totalPrice),
 			() -> assertThat(order.getProducts()).hasSize(1)
 		);
+	}
+
+	@DisplayName("결제 준비")
+	@Nested
+	class PreparePayment {
+
+		@DisplayName("결제 대기 주문이 주어질 때, 주문 금액과 같은 금액으로 결제를 준비하면, 결제 진행 중 상태가 된다")
+		@Test
+		void preparePayment_PendingOrder_ReturnsPaymentInProgressOrder() {
+			// given — 만료 검사를 통과하도록 방금 만든 주문을 쓴다
+			Order order = Order.of(1L, 1L, OrderStatus.PENDING, List.of(OrderFixture.FIRST_ORDER_PRODUCT), LocalDateTime.now());
+
+			// when
+			Order prepared = order.preparePayment(order.getTotalPrice(), LocalDateTime.now());
+
+			// then
+			assertThat(prepared.getStatus()).isEqualTo(OrderStatus.PAYMENT_IN_PROGRESS);
+		}
+
+		@DisplayName("이미 결제가 진행 중인 주문이 주어질 때, 결제를 다시 준비하면, 중복 결제로 보고 예외가 발생한다")
+		@Test
+		void preparePayment_PaymentInProgressOrder_ThrowsException() {
+			// given
+			Order order = OrderFixture.PAYMENT_IN_PROGRESS_ORDER;
+
+			// when & then
+			assertThatThrownBy(() -> order.preparePayment(order.getTotalPrice(), LocalDateTime.now()))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage("이미 결제가 진행 중인 주문입니다.");
+		}
+	}
+
+	@DisplayName("결제 대기로 되돌리기")
+	@Nested
+	class RollbackToPending {
+
+		@DisplayName("결제 진행 중인 주문이 주어질 때, 결제 대기로 되돌리면, 결제 대기 상태가 된다")
+		@Test
+		void rollbackToPending_PaymentInProgressOrder_ReturnsPendingOrder() {
+			// given
+			Order order = OrderFixture.PAYMENT_IN_PROGRESS_ORDER;
+
+			// when
+			Order rolledBack = order.rollbackToPending();
+
+			// then
+			assertThat(rolledBack.getStatus()).isEqualTo(OrderStatus.PENDING);
+		}
+
+		@DisplayName("결제 대기 주문이 주어질 때, 결제 대기로 되돌리면, 예외가 발생한다")
+		@Test
+		void rollbackToPending_PendingOrder_ThrowsException() {
+			// given
+			Order order = OrderFixture.PENDING_ORDER;
+
+			// when & then
+			assertThatThrownBy(order::rollbackToPending)
+				.isInstanceOf(IllegalStateException.class);
+		}
 	}
 
 	// @DisplayName("주문 결제 테스트")

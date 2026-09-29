@@ -14,16 +14,12 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, Long> 
 
 	OrderJpaEntity findByNo(Long orderNo);
 
-	@Modifying
-	@Query("UPDATE OrderJpaEntity o SET o.status = :status WHERE o.no = :orderNo")
-	void updateOrder(Long orderNo, OrderStatus status);
+	@Modifying(flushAutomatically = true, clearAutomatically = true)
+	@Query("UPDATE OrderJpaEntity o SET o.status = :next WHERE o.no = :orderNo AND o.status = :expected")
+	int updateStatus(Long orderNo, OrderStatus expected, OrderStatus next);
 
 	@Query("""
 		SELECT o FROM OrderJpaEntity o JOIN FETCH o.orderProducts
 		WHERE o.status = :status AND o.orderedAt < :cutoffTime""")
 	List<OrderJpaEntity> findExpiredOrders(OrderStatus status, LocalDateTime cutoffTime, Pageable pageable);
-
-	@Modifying
-	@Query("UPDATE OrderJpaEntity o SET o.status = :canceled WHERE o.no IN :expiredNos AND o.status IN :statuses")
-	void updateStatusToCancelInBatch(List<Long> expiredNos, OrderStatus canceled, List<OrderStatus> statuses);
 }

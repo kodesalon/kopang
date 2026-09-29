@@ -77,7 +77,7 @@ public class PurchaseOrchestrator {
 	}
 
 	public void cancelInBatch(Orders expiredOrders) {
-		orderService.cancelExpiredOrders(expiredOrders.getAllIds());
-		stockReservationService.restoreInBatch(expiredOrders.groupByStockKey());
+		Orders cancelledOrders = orderService.cancelExpiredPendingOrders(expiredOrders);
+		stockReservationService.restoreInBatch(cancelledOrders.groupByStockKey());
 	}
 }
