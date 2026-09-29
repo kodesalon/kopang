@@ -22,8 +22,8 @@ public class EventQueueService {
 		return eventQueueRepository.enqueue(eventId, memberNo, count);
 	}
 
-	public List<QueueEntry> dequeueForProcessing(Long eventId, int batchSize) {
-		return eventQueueRepository.dequeueForProcessing(eventId, batchSize);
+	public List<QueueEntry> activateNextBatch(Long eventId, int batchSize) {
+		return eventQueueRepository.activateNextBatch(eventId, batchSize);
 	}
 
 	public long getPosition(Long eventId, String token) {
@@ -32,10 +32,6 @@ public class EventQueueService {
 
 	public Set<Long> getActiveEventIds() {
 		return eventQueueRepository.getActiveEventIds();
-	}
-
-	public void activateTokens(Long eventId, List<String> tokens) {
-		eventQueueRepository.activateTokens(eventId, tokens);
 	}
 
 	public boolean isTokenActive(Long eventId, String token) {

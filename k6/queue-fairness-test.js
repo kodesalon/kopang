@@ -47,7 +47,7 @@ export const options = {
       // per-vu-iterations: VU 800개가 각각 정확히 1번씩 실행
       // → 800개의 독립된 사용자가 동시에 대기열 진입 (BATCH_SIZE=400 기준 2배치)
       executor: 'per-vu-iterations',
-      vus: 800,
+      vus: Number(__ENV.VUS || 800),
       iterations: 1,
       maxDuration: '120s',
     },
@@ -58,6 +58,10 @@ export const options = {
 
 export default function () {
   const vuId = exec.vu.idInTest; // 1~800, 각 VU의 고유 memberNo로 활용
+
+  // STAGGER_MS > 0이면 VU마다 (vuId - 1) × STAGGER_MS만큼 늦게 보낸다 → 보낸 순서가 분명해짐
+  const STAGGER_MS = Number(__ENV.STAGGER_MS || 0);
+  if (STAGGER_MS > 0) sleep((vuId - 1) * STAGGER_MS / 1000);
 
   // ── Phase 1: 대기열 진입 ─────────────────────────────────────────────────
   const entryTime = Date.now();

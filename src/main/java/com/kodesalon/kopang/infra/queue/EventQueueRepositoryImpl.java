@@ -9,8 +9,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Repository;
 
 import com.kodesalon.kopang.domain.queue.EventQueueRepository;
@@ -31,9 +32,13 @@ public class EventQueueRepositoryImpl implements EventQueueRepository {
 	private static final long LOCK_TTL_SEC = 2L;
 
 	private final StringRedisTemplate redisTemplate;
+	private final DefaultRedisScript<List> activateBatchScript;
 
 	public EventQueueRepositoryImpl(StringRedisTemplate redisTemplate) {
 		this.redisTemplate = redisTemplate;
+		this.activateBatchScript = new DefaultRedisScript<>();
+		this.activateBatchScript.setLocation(new ClassPathResource("redis/activate_queue_batch.lua"));
+		this.activateBatchScript.setResultType(List.class);
 	}
 
 	@Override
@@ -64,30 +69,35 @@ public class EventQueueRepositoryImpl implements EventQueueRepository {
 	}
 
 	@Override
-	public List<QueueEntry> dequeueForProcessing(Long eventId, int batchSize) {
-		String queueKey = String.format(QUEUE_KEY, eventId);
-		Set<ZSetOperations.TypedTuple<String>> tuples =
-			redisTemplate.opsForZSet().popMin(queueKey, batchSize);
-
-		if (tuples == null || tuples.isEmpty()) {
+	@SuppressWarnings("unchecked")
+	public List<QueueEntry> activateNextBatch(Long eventId, int batchSize) {
+		List<String> keys = List.of(
+			String.format(QUEUE_KEY, eventId),
+			String.format(ACTIVE_KEY, eventId),
+			ACTIVE_EVENTS
+		);
+		List<String> popped = (List<String>) redisTemplate.execute(
+			activateBatchScript, keys,
+			String.valueOf(batchSize), String.valueOf(ACTIVE_TTL_SEC), String.valueOf(eventId)
+		);
+		if (popped == null || popped.isEmpty()) {
 			return List.of();
 		}
 
+		// popped = [token, score, token, score, ...] (score 오름차순). 토큰은 이미 활성 Set 에 있다
 		List<QueueEntry> entries = new ArrayList<>();
-		for (ZSetOperations.TypedTuple<String> tuple : tuples) {
-			String token = tuple.getValue();
-			if (token == null) continue;
+		for (int i = 0; i + 1 < popped.size(); i += 2) {
+			String token = popped.get(i);
+			long requestedAt = (long) Double.parseDouble(popped.get(i + 1));
 
-			String entryKey = String.format(ENTRY_KEY, token);
-			Map<Object, Object> fields = redisTemplate.opsForHash().entries(entryKey);
+			Map<Object, Object> fields = redisTemplate.opsForHash().entries(String.format(ENTRY_KEY, token));
 			if (fields.isEmpty()) continue;
 
 			Long entryMemberNo = Long.parseLong((String) fields.get("memberNo"));
 			Integer entryCount = Integer.parseInt((String) fields.get("count"));
 			Long entryEventId = Long.parseLong((String) fields.get("eventId"));
-			long score = tuple.getScore() == null ? 0L : tuple.getScore().longValue();
 
-			entries.add(new QueueEntry(token, entryEventId, entryMemberNo, entryCount, score));
+			entries.add(new QueueEntry(token, entryEventId, entryMemberNo, entryCount, requestedAt));
 		}
 		return entries;
 	}
@@ -108,20 +118,6 @@ public class EventQueueRepositoryImpl implements EventQueueRepository {
 		return members.stream()
 			.map(Long::parseLong)
 			.collect(Collectors.toSet());
-	}
-
-	@Override
-	public void activateTokens(Long eventId, List<String> tokens) {
-		String activeKey = String.format(ACTIVE_KEY, eventId);
-		String queueKey = String.format(QUEUE_KEY, eventId);
-
-		redisTemplate.opsForSet().add(activeKey, tokens.toArray(new String[0]));
-		redisTemplate.expire(activeKey, Duration.ofSeconds(ACTIVE_TTL_SEC));
-
-		Long remaining = redisTemplate.opsForZSet().zCard(queueKey);
-		if (remaining == null || remaining == 0) {
-			redisTemplate.opsForSet().remove(ACTIVE_EVENTS, String.valueOf(eventId));
-		}
 	}
 
 	@Override

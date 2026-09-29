@@ -179,7 +179,8 @@ class EventQueueControllerTest {
 				.jsonPath().getMap(".");
 			String token = enterResponse.get("token").toString();
 
-			// manually activate token
+			// 워커가 하는 것처럼 대기열에서 빼고 활성 Set 에 넣는다
+			redisTemplate.opsForZSet().remove(QUEUE_EVENT_KEY, token);
 			redisTemplate.opsForSet().add(QUEUE_ACTIVE_KEY, token);
 
 			// when
@@ -240,7 +241,8 @@ class EventQueueControllerTest {
 				.jsonPath().getMap(".");
 			String token = enterResponse.get("token").toString();
 
-			// manually activate token
+			// 워커가 하는 것처럼 대기열에서 빼고 활성 Set 에 넣는다
+			redisTemplate.opsForZSet().remove(QUEUE_EVENT_KEY, token);
 			redisTemplate.opsForSet().add(QUEUE_ACTIVE_KEY, token);
 
 			// when
